@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   ShoppingCart,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -20,6 +21,7 @@ const navItems = [
   { title: "Servicios", path: "/services", icon: Scissors },
   { title: "Inventario", path: "/inventory", icon: Package },
   { title: "Punto de Venta", path: "/pos", icon: ShoppingCart },
+  { title: "Reportes", path: "/reports", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
