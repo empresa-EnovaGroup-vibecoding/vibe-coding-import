@@ -9,10 +9,13 @@ import {
   X,
   ShoppingCart,
   BarChart3,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const navItems = [
   { title: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -27,6 +30,12 @@ const navItems = [
 export function AppSidebar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { signOut, user } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Sesión cerrada");
+  };
 
   return (
     <>
@@ -68,7 +77,7 @@ export function AppSidebar() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-4">
+          <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -93,8 +102,24 @@ export function AppSidebar() {
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="border-t border-sidebar-border p-4">
+          {/* User & Logout */}
+          <div className="border-t border-sidebar-border p-4 space-y-3">
+            {user && (
+              <div className="px-3 py-2">
+                <p className="text-xs text-sidebar-foreground/50">Conectado como</p>
+                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  {user.email}
+                </p>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5" />
+              Cerrar Sesión
+            </Button>
             <p className="text-xs text-sidebar-foreground/50 text-center">
               © 2024 GestorPro
             </p>

@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import Clients from "./pages/Clients";
@@ -11,6 +13,7 @@ import Inventory from "./pages/Inventory";
 import Appointments from "./pages/Appointments";
 import POS from "./pages/POS";
 import Reports from "./pages/Reports";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,18 +24,85 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <MainLayout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/appointments" element={<Appointments />} />
-            <Route path="/pos" element={<POS />} />
-            <Route path="/reports" element={<Reports />} />
+            {/* Public route */}
+            <Route path="/auth" element={<Auth />} />
+            
+            {/* Protected routes */}
+            <Route
+              path="/"
+              element={
+                <RequireAuth>
+                  <MainLayout>
+                    <Index />
+                  </MainLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/clients"
+              element={
+                <RequireAuth>
+                  <MainLayout>
+                    <Clients />
+                  </MainLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/services"
+              element={
+                <RequireAuth>
+                  <MainLayout>
+                    <Services />
+                  </MainLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <RequireAuth>
+                  <MainLayout>
+                    <Inventory />
+                  </MainLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/appointments"
+              element={
+                <RequireAuth>
+                  <MainLayout>
+                    <Appointments />
+                  </MainLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/pos"
+              element={
+                <RequireAuth>
+                  <MainLayout>
+                    <POS />
+                  </MainLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <RequireAuth>
+                  <MainLayout>
+                    <Reports />
+                  </MainLayout>
+                </RequireAuth>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </MainLayout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
