@@ -224,7 +224,7 @@ export default function Inventory() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cost_price">Precio Costo (€)</Label>
+                  <Label htmlFor="cost_price">Precio Costo (Q)</Label>
                   <Input
                     id="cost_price"
                     type="number"
@@ -236,7 +236,7 @@ export default function Inventory() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sale_price">Precio Venta (€)</Label>
+                  <Label htmlFor="sale_price">Precio Venta (Q)</Label>
                   <Input
                     id="sale_price"
                     type="number"
@@ -338,10 +338,10 @@ export default function Inventory() {
                       )}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-muted-foreground">
-                      €{Number(item.cost_price).toFixed(2)}
+                      Q{Number(item.cost_price).toFixed(2)}
                     </TableCell>
                     <TableCell className="font-medium text-foreground">
-                      €{Number(item.sale_price).toFixed(2)}
+                      Q{Number(item.sale_price).toFixed(2)}
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">
                       {item.supplier || "-"}

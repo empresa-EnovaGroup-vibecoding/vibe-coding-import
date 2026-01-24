@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Calendar as CalendarIcon, Clock, User, Trash2 } from "lucide-react";
+import { WhatsAppButton } from "@/components/appointments/WhatsAppButton";
+import { Plus, Calendar as CalendarIcon, Clock, User, Trash2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { format, startOfMonth, endOfMonth, isSameDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, isSameDay, differenceInMinutes } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +37,7 @@ interface Appointment {
   status: string;
   notes: string | null;
   total_price: number;
-  clients: { name: string } | null;
+  clients: { name: string; phone: string | null } | null;
   appointment_services: {
     id: string;
     price_at_time: number;
@@ -47,6 +48,7 @@ interface Appointment {
 interface Client {
   id: string;
   name: string;
+  phone: string | null;
 }
 
 interface Service {
@@ -74,7 +76,16 @@ export default function Appointments() {
     notes: "",
     selectedServices: [] as string[],
   });
+  const [now, setNow] = useState(new Date());
   const queryClient = useQueryClient();
+
+  // Update current time every minute for upcoming appointment alerts
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const monthStart = startOfMonth(selectedDate);
   const monthEnd = endOfMonth(selectedDate);
@@ -86,7 +97,7 @@ export default function Appointments() {
         .from("appointments")
         .select(`
           *,
-          clients (name),
+          clients (name, phone),
           appointment_services (
             id,
             price_at_time,
@@ -107,7 +118,7 @@ export default function Appointments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name")
+        .select("id, name, phone")
         .order("name", { ascending: true });
       if (error) throw error;
       return data as Client[];
@@ -126,17 +137,36 @@ export default function Appointments() {
     },
   });
 
+  // Check for upcoming appointments and show alerts
+  useEffect(() => {
+    if (!appointments) return;
+
+    const upcomingAppointments = appointments.filter((apt) => {
+      if (apt.status === "cancelled" || apt.status === "completed") return false;
+      const aptTime = new Date(apt.start_time);
+      const minutesUntil = differenceInMinutes(aptTime, now);
+      return minutesUntil > 0 && minutesUntil <= 60;
+    });
+
+    upcomingAppointments.forEach((apt) => {
+      const minutesUntil = differenceInMinutes(new Date(apt.start_time), now);
+      if (minutesUntil === 60 || minutesUntil === 30 || minutesUntil === 15) {
+        toast.warning(`Alerta: Cita con ${apt.clients?.name} en ${minutesUntil} minutos`, {
+          duration: 10000,
+        });
+      }
+    });
+  }, [appointments, now]);
+
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const startTime = new Date(`${data.date}T${data.time}`);
       
-      // Calculate total price and end time
       const selectedServicesList = services?.filter(s => data.selectedServices.includes(s.id)) || [];
       const totalPrice = selectedServicesList.reduce((sum, s) => sum + Number(s.price), 0);
       const totalDuration = selectedServicesList.reduce((sum, s) => sum + s.duration, 0);
       const endTime = new Date(startTime.getTime() + totalDuration * 60000);
 
-      // Create appointment
       const { data: appointment, error: appointmentError } = await supabase
         .from("appointments")
         .insert([{
@@ -152,7 +182,6 @@ export default function Appointments() {
 
       if (appointmentError) throw appointmentError;
 
-      // Create appointment_services
       if (data.selectedServices.length > 0) {
         const appointmentServices = data.selectedServices.map(serviceId => {
           const service = services?.find(s => s.id === serviceId);
@@ -258,11 +287,16 @@ export default function Appointments() {
     }, 0);
   };
 
+  const isUpcoming = (startTime: string) => {
+    const aptTime = new Date(startTime);
+    const minutesUntil = differenceInMinutes(aptTime, now);
+    return minutesUntil > 0 && minutesUntil <= 60;
+  };
+
   const selectedDayAppointments = appointments?.filter(apt =>
     isSameDay(new Date(apt.start_time), selectedDate)
   );
 
-  // Get dates with appointments for calendar highlighting
   const datesWithAppointments = appointments?.map(apt => new Date(apt.start_time)) || [];
 
   return (
@@ -346,7 +380,7 @@ export default function Appointments() {
                         </label>
                       </div>
                       <span className="text-sm text-muted-foreground">
-                        €{Number(service.price).toFixed(2)}
+                        Q{Number(service.price).toFixed(2)}
                       </span>
                     </div>
                   ))}
@@ -358,7 +392,7 @@ export default function Appointments() {
                 </div>
                 {formData.selectedServices.length > 0 && (
                   <p className="text-sm font-medium text-right">
-                    Total: €{calculateTotal().toFixed(2)}
+                    Total: Q{calculateTotal().toFixed(2)}
                   </p>
                 )}
               </div>
@@ -451,11 +485,25 @@ export default function Appointments() {
             <div className="space-y-4">
               {selectedDayAppointments.map((appointment) => {
                 const status = statusConfig[appointment.status as keyof typeof statusConfig];
+                const upcoming = isUpcoming(appointment.start_time);
+                
                 return (
                   <div
                     key={appointment.id}
-                    className="rounded-lg border border-border bg-muted/30 p-4"
+                    className={cn(
+                      "rounded-lg border p-4 transition-all",
+                      upcoming 
+                        ? "border-warning bg-warning/10 ring-2 ring-warning/50 animate-pulse" 
+                        : "border-border bg-muted/30"
+                    )}
                   >
+                    {upcoming && (
+                      <div className="flex items-center gap-2 text-warning font-medium mb-3">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="text-sm">¡Cita próxima!</span>
+                      </div>
+                    )}
+                    
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -472,6 +520,11 @@ export default function Appointments() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <WhatsAppButton
+                          phone={appointment.clients?.phone || null}
+                          clientName={appointment.clients?.name || ""}
+                          appointmentTime={appointment.start_time}
+                        />
                         <Select
                           value={appointment.status}
                           onValueChange={(value) =>
@@ -513,7 +566,7 @@ export default function Appointments() {
                           ))}
                         </div>
                         <p className="text-sm font-medium text-foreground">
-                          Total: €{Number(appointment.total_price).toFixed(2)}
+                          Total: Q{Number(appointment.total_price).toFixed(2)}
                         </p>
                       </div>
                     )}

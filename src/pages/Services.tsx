@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Scissors, Clock, Euro, Pencil, Trash2 } from "lucide-react";
+import { Plus, Scissors, Clock, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Service {
@@ -179,7 +179,7 @@ export default function Services() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="price">Precio (€)</Label>
+                  <Label htmlFor="price">Precio (Q)</Label>
                   <Input
                     id="price"
                     type="number"
@@ -245,8 +245,7 @@ export default function Services() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 font-medium text-foreground">
-                      <Euro className="h-4 w-4" />
-                      {Number(service.price).toFixed(2)}
+                      Q{Number(service.price).toFixed(2)}
                     </div>
                   </TableCell>
                   <TableCell>
