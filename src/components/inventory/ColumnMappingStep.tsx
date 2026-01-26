@@ -77,11 +77,13 @@ export default function ColumnMappingStep({
                 <SelectTrigger className={!isMapped && isRequired ? "border-destructive/50" : ""}>
                   <SelectValue placeholder="Seleccionar columna" />
                 </SelectTrigger>
-                <SelectContent>
+              <SelectContent>
                   <SelectItem value="_none_">
                     <span className="text-muted-foreground">-- No mapear --</span>
                   </SelectItem>
-                  {headers.map((header) => (
+                  {headers
+                    .filter((header) => header && header.trim() !== "")
+                    .map((header) => (
                     <SelectItem key={header} value={header}>
                       {header}
                     </SelectItem>
