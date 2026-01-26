@@ -20,7 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, Search, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Package, Search, Pencil, Trash2, AlertTriangle, FileUp } from "lucide-react";
+import InventoryImportModal from "@/components/inventory/InventoryImportModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ interface InventoryItem {
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -179,13 +181,22 @@ export default function Inventory() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Inventario</h1>
           <p className="text-muted-foreground mt-1">Gestión de productos y stock</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-          <DialogTrigger asChild>
-            <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Nuevo Producto
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            <FileUp className="h-4 w-4" />
+            Importar Inventario
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
+            <DialogTrigger asChild>
+              <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Nuevo Producto
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>
@@ -268,6 +279,13 @@ export default function Inventory() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
+
+        <InventoryImportModal
+          open={isImportModalOpen}
+          onOpenChange={setIsImportModalOpen}
+          onImportComplete={() => queryClient.invalidateQueries({ queryKey: ["inventory"] })}
+        />
       </div>
 
       {/* Search */}
