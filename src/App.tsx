@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { RoleSetup } from "@/components/auth/RoleSetup";
 import Index from "./pages/Index";
 import Clients from "./pages/Clients";
 import Services from "./pages/Services";
@@ -26,8 +27,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Public route */}
+            {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
+            <Route path="/role-setup" element={<RoleSetup />} />
             
             {/* Protected routes */}
             <Route
