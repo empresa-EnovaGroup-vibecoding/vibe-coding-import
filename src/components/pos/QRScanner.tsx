@@ -39,8 +39,7 @@ export function QRScanner({ onScan, isOpen, onOpenChange }: QRScannerProps) {
       );
       
       setIsScanning(true);
-    } catch (err) {
-      console.error("Error starting scanner:", err);
+    } catch {
       toast.error("Error al acceder a la cámara. Verifica los permisos.");
     }
   };
@@ -50,8 +49,8 @@ export function QRScanner({ onScan, isOpen, onOpenChange }: QRScannerProps) {
       try {
         await scannerRef.current.stop();
         scannerRef.current.clear();
-      } catch (err) {
-        console.error("Error stopping scanner:", err);
+      } catch {
+        // Scanner cleanup failed silently
       }
       setIsScanning(false);
     }
