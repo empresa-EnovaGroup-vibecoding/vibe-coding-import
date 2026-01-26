@@ -6,9 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+
+const formatDate = (dateString: string | null | undefined, formatStr: string) => {
+  if (!dateString) return "Fecha no disponible";
+  const date = typeof dateString === 'string' ? parseISO(dateString) : new Date(dateString);
+  return isValid(date) ? format(date, formatStr, { locale: es }) : "Fecha inválida";
+};
 import { toast } from "sonner";
 
 interface Client {
@@ -127,7 +133,7 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
             <div>
               <h2 className="text-xl font-semibold text-foreground">{client.name}</h2>
               <p className="text-sm text-muted-foreground">
-                Cliente desde {format(new Date(client.created_at), "MMMM yyyy", { locale: es })}
+                Cliente desde {formatDate(client.created_at, "MMMM yyyy")}
               </p>
             </div>
           </div>
@@ -260,12 +266,10 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <p className="font-medium text-foreground">
-                            {format(new Date(sale.created_at), "EEEE, d 'de' MMMM yyyy", {
-                              locale: es,
-                            })}
+                            {formatDate(sale.created_at, "EEEE, d 'de' MMMM yyyy")}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {format(new Date(sale.created_at), "HH:mm")} hrs
+                            {formatDate(sale.created_at, "HH:mm")} hrs
                           </p>
                         </div>
                         <p className="text-lg font-bold text-primary">
@@ -331,12 +335,10 @@ function AppointmentCard({ appointment }: { appointment: {
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="font-medium text-foreground">
-            {format(new Date(appointment.start_time), "EEEE, d 'de' MMMM yyyy", {
-              locale: es,
-            })}
+            {formatDate(appointment.start_time, "EEEE, d 'de' MMMM yyyy")}
           </p>
           <p className="text-sm text-muted-foreground">
-            {format(new Date(appointment.start_time), "HH:mm")} hrs
+            {formatDate(appointment.start_time, "HH:mm")} hrs
           </p>
         </div>
         <Badge variant="outline" className={cn("text-xs", status?.class)}>

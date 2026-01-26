@@ -22,8 +22,14 @@ import {
 } from "@/components/ui/table";
 import { Plus, Search, User, Phone, Mail, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+
+const formatDate = (dateString: string | null | undefined, formatStr: string) => {
+  if (!dateString) return "Fecha no disponible";
+  const date = typeof dateString === 'string' ? parseISO(dateString) : new Date(dateString);
+  return isValid(date) ? format(date, formatStr, { locale: es }) : "Fecha inválida";
+};
 import { ClientDetail } from "@/components/clients/ClientDetail";
 
 interface Client {
@@ -246,7 +252,7 @@ export default function Clients() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                    {format(new Date(client.created_at), "d MMM yyyy", { locale: es })}
+                    {formatDate(client.created_at, "d MMM yyyy")}
                   </TableCell>
                   <TableCell>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
