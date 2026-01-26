@@ -3,7 +3,6 @@ import { Upload, FileSpreadsheet, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Papa from "papaparse";
-import * as XLSX from "xlsx";
 import type { ParsedData } from "./InventoryImportModal";
 
 interface FileUploadTabProps {
@@ -53,29 +52,12 @@ export default function FileUploadTab({ onDataParsed }: FileUploadTabProps) {
             setIsProcessing(false);
           },
         });
-      } else if (extension === "xlsx" || extension === "xls") {
-        const buffer = await file.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: "array" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json<Record<string, string>>(firstSheet, {
-          defval: "",
-        });
-        
-        if (jsonData.length === 0) {
-          setError("El archivo está vacío o no tiene datos válidos");
-          setIsProcessing(false);
-          return;
-        }
-
-        const headers = Object.keys(jsonData[0]);
-        onDataParsed({ headers, rows: jsonData });
-        setIsProcessing(false);
       } else {
-        setError("Formato de archivo no soportado. Usa CSV o XLSX.");
+        setError("Formato de archivo no soportado. Usa archivos CSV.");
         setIsProcessing(false);
       }
-    } catch (err) {
-      setError("Error al procesar el archivo: " + (err as Error).message);
+    } catch {
+      setError("Error al procesar el archivo");
       setIsProcessing(false);
     }
   }, [onDataParsed]);
@@ -154,12 +136,12 @@ export default function FileUploadTab({ onDataParsed }: FileUploadTabProps) {
             </p>
             <input
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept=".csv"
               onChange={handleFileSelect}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
             <p className="text-xs text-muted-foreground">
-              Formatos soportados: CSV, XLSX
+              Formato soportado: CSV
             </p>
           </>
         )}

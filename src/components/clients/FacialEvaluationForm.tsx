@@ -167,8 +167,7 @@ export function FacialEvaluationForm({ clientId, onBack, onSuccess }: FacialEval
       toast.success("Evaluación guardada exitosamente");
       onSuccess();
     },
-    onError: (error) => {
-      console.error("Error creating evaluation:", error);
+    onError: () => {
       toast.error("Error al guardar la evaluación");
     },
   });

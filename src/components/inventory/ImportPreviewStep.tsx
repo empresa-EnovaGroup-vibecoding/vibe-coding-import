@@ -105,9 +105,8 @@ export default function ImportPreviewStep({
       toast.success(`${count} productos importados exitosamente`);
       onImportSuccess();
     },
-    onError: (error) => {
-      console.error("Import error:", error);
-      toast.error("Error al importar productos: " + (error as Error).message);
+    onError: () => {
+      toast.error("Error al importar productos");
     },
   });
 

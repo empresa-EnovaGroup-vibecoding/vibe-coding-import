@@ -183,8 +183,7 @@ export default function POS() {
       setNotes("");
       toast.success("¡Venta registrada con éxito!");
     },
-    onError: (error) => {
-      console.error("Sale error:", error);
+    onError: () => {
       toast.error("Error al registrar la venta");
     },
   });
