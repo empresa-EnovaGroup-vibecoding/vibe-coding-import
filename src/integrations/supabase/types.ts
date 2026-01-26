@@ -127,6 +127,140 @@ export type Database = {
         }
         Relationships: []
       }
+      evaluation_product_recommendations: {
+        Row: {
+          created_at: string
+          evaluation_id: string
+          id: string
+          notes: string | null
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          evaluation_id: string
+          id?: string
+          notes?: string | null
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          evaluation_id?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_product_recommendations_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "facial_evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_product_recommendations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facial_evaluations: {
+        Row: {
+          allergy_details: string | null
+          cleaning_frequency: Database["public"]["Enums"]["cleaning_frequency_type"]
+          cleanser_brand: string | null
+          client_id: string
+          cream_brand: string | null
+          created_at: string
+          has_allergies: boolean
+          has_skin_disease: boolean
+          id: string
+          medication_details: string | null
+          pregnancy_lactation: boolean
+          recent_treatments: boolean
+          removes_makeup_properly: boolean
+          serum_brand: string | null
+          skin_analysis: string | null
+          skin_disease_details: string | null
+          skin_type: Database["public"]["Enums"]["skin_type"]
+          smokes_alcohol: boolean
+          sunscreen_brand: string | null
+          takes_medication: boolean
+          treatment_details: string | null
+          treatment_performed: string | null
+          updated_at: string
+          uses_exfoliants: boolean
+          uses_makeup: boolean
+          uses_sunscreen: boolean
+        }
+        Insert: {
+          allergy_details?: string | null
+          cleaning_frequency?: Database["public"]["Enums"]["cleaning_frequency_type"]
+          cleanser_brand?: string | null
+          client_id: string
+          cream_brand?: string | null
+          created_at?: string
+          has_allergies?: boolean
+          has_skin_disease?: boolean
+          id?: string
+          medication_details?: string | null
+          pregnancy_lactation?: boolean
+          recent_treatments?: boolean
+          removes_makeup_properly?: boolean
+          serum_brand?: string | null
+          skin_analysis?: string | null
+          skin_disease_details?: string | null
+          skin_type: Database["public"]["Enums"]["skin_type"]
+          smokes_alcohol?: boolean
+          sunscreen_brand?: string | null
+          takes_medication?: boolean
+          treatment_details?: string | null
+          treatment_performed?: string | null
+          updated_at?: string
+          uses_exfoliants?: boolean
+          uses_makeup?: boolean
+          uses_sunscreen?: boolean
+        }
+        Update: {
+          allergy_details?: string | null
+          cleaning_frequency?: Database["public"]["Enums"]["cleaning_frequency_type"]
+          cleanser_brand?: string | null
+          client_id?: string
+          cream_brand?: string | null
+          created_at?: string
+          has_allergies?: boolean
+          has_skin_disease?: boolean
+          id?: string
+          medication_details?: string | null
+          pregnancy_lactation?: boolean
+          recent_treatments?: boolean
+          removes_makeup_properly?: boolean
+          serum_brand?: string | null
+          skin_analysis?: string | null
+          skin_disease_details?: string | null
+          skin_type?: Database["public"]["Enums"]["skin_type"]
+          smokes_alcohol?: boolean
+          sunscreen_brand?: string | null
+          takes_medication?: boolean
+          treatment_details?: string | null
+          treatment_performed?: string | null
+          updated_at?: string
+          uses_exfoliants?: boolean
+          uses_makeup?: boolean
+          uses_sunscreen?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facial_evaluations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory: {
         Row: {
           cost_price: number
@@ -322,6 +456,14 @@ export type Database = {
     }
     Enums: {
       appointment_status: "pending" | "confirmed" | "completed" | "cancelled"
+      cleaning_frequency_type: "once" | "twice" | "occasional"
+      skin_type:
+        | "normal"
+        | "dry"
+        | "combination"
+        | "oily"
+        | "sensitive"
+        | "acneic"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -450,6 +592,15 @@ export const Constants = {
   public: {
     Enums: {
       appointment_status: ["pending", "confirmed", "completed", "cancelled"],
+      cleaning_frequency_type: ["once", "twice", "occasional"],
+      skin_type: [
+        "normal",
+        "dry",
+        "combination",
+        "oily",
+        "sensitive",
+        "acneic",
+      ],
     },
   },
 } as const
