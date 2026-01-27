@@ -92,9 +92,9 @@ export function AppSidebar() {
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
-            {filteredNavItems.map(item => {
+          {filteredNavItems.map(item => {
             const isActive = location.pathname === item.path;
-            return <NavLink key={item.path} to={item.path} onClick={() => setMobileOpen(false)} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 text-success-foreground font-mono text-center bg-sidebar-primary", isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground")}>
+            return <NavLink key={item.path} to={item.path} onClick={() => setMobileOpen(false)} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground")}>
                   <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />
                   <span>{item.title}</span>
                   {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" />}
@@ -110,7 +110,11 @@ export function AppSidebar() {
                   {user.email}
                 </p>
               </div>}
-            <Button variant="ghost" className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50" onClick={handleLogout}>
+            <Button 
+              variant="destructive" 
+              className="w-full justify-start gap-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium" 
+              onClick={handleLogout}
+            >
               <LogOut className="h-5 w-5" />
               Cerrar Sesión
             </Button>
