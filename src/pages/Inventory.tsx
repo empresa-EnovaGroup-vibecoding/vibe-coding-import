@@ -24,13 +24,14 @@ import { Plus, Package, Search, Pencil, Trash2, AlertTriangle, FileUp } from "lu
 import InventoryImportModal from "@/components/inventory/InventoryImportModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface InventoryItem {
   id: string;
   name: string;
   sku: string | null;
   stock_level: number;
-  cost_price: number;
+  cost_price: number | null;
   sale_price: number;
   supplier: string | null;
 }
@@ -49,12 +50,14 @@ export default function Inventory() {
     supplier: "",
   });
   const queryClient = useQueryClient();
+  const { isAdmin } = useUserRole();
 
+  // Use secure view that conditionally shows cost_price based on role
   const { data: inventory, isLoading } = useQuery({
     queryKey: ["inventory"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("inventory")
+        .from("inventory_staff_view")
         .select("*")
         .order("name", { ascending: true });
       if (error) throw error;
@@ -145,7 +148,7 @@ export default function Inventory() {
       name: item.name,
       sku: item.sku || "",
       stock_level: item.stock_level.toString(),
-      cost_price: item.cost_price.toString(),
+      cost_price: item.cost_price?.toString() || "",
       sale_price: item.sale_price.toString(),
       supplier: item.supplier || "",
     });
@@ -234,18 +237,20 @@ export default function Inventory() {
                     min="0"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cost_price">Precio Costo (Q)</Label>
-                  <Input
-                    id="cost_price"
-                    type="number"
-                    value={formData.cost_price}
-                    onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
+                {isAdmin && (
+                  <div className="space-y-2">
+                    <Label htmlFor="cost_price">Precio Costo (Q)</Label>
+                    <Input
+                      id="cost_price"
+                      type="number"
+                      value={formData.cost_price}
+                      onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="sale_price">Precio Venta (Q)</Label>
                   <Input
@@ -319,7 +324,7 @@ export default function Inventory() {
                   <TableHead>Producto</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Stock</TableHead>
-                  <TableHead className="hidden sm:table-cell">P. Costo</TableHead>
+                  {isAdmin && <TableHead className="hidden sm:table-cell">P. Costo</TableHead>}
                   <TableHead>P. Venta</TableHead>
                   <TableHead className="hidden md:table-cell">Proveedor</TableHead>
                   <TableHead className="w-24">Acciones</TableHead>
@@ -355,9 +360,11 @@ export default function Inventory() {
                         <Badge variant="secondary">{item.stock_level}</Badge>
                       )}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell text-muted-foreground">
-                      Q{Number(item.cost_price).toFixed(2)}
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="hidden sm:table-cell text-muted-foreground">
+                        Q{Number(item.cost_price || 0).toFixed(2)}
+                      </TableCell>
+                    )}
                     <TableCell className="font-medium text-foreground">
                       Q{Number(item.sale_price).toFixed(2)}
                     </TableCell>

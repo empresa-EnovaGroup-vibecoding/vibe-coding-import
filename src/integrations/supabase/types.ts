@@ -265,6 +265,13 @@ export type Database = {
             referencedRelation: "inventory"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "evaluation_product_recommendations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_staff_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       facial_evaluations: {
@@ -518,6 +525,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_staff_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sale_items_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
@@ -651,7 +665,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      inventory_staff_view: {
+        Row: {
+          cost_price: number | null
+          created_at: string | null
+          id: string | null
+          name: string | null
+          qr_code: string | null
+          sale_price: number | null
+          sku: string | null
+          stock_level: number | null
+          supplier: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cost_price?: never
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          qr_code?: string | null
+          sale_price?: number | null
+          sku?: string | null
+          stock_level?: number | null
+          supplier?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cost_price?: never
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          qr_code?: string | null
+          sale_price?: number | null
+          sku?: string | null
+          stock_level?: number | null
+          supplier?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       assign_first_admin: { Args: { _user_id: string }; Returns: undefined }
