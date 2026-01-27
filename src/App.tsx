@@ -18,6 +18,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import UserManagement from "./pages/UserManagement";
 import Packages from "./pages/Packages";
+import Team from "./pages/Team";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,16 @@ const App = () => (
                 <RequireAuth>
                   <MainLayout>
                     <Packages />
+                  </MainLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/team"
+              element={
+                <RequireAuth>
+                  <MainLayout>
+                    <Team />
                   </MainLayout>
                 </RequireAuth>
               }
