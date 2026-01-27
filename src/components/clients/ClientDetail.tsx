@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save, ClipboardList } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save, ClipboardList, Gift } from "lucide-react";
 import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { FacialEvaluationForm } from "./FacialEvaluationForm";
 import { EvaluationHistoryList } from "./EvaluationHistoryList";
 import { EvaluationDetail } from "./EvaluationDetail";
+import { ClientPackages } from "./ClientPackages";
 
 const formatDate = (dateString: string | null | undefined, formatStr: string) => {
   if (!dateString) return "Fecha no disponible";
@@ -155,10 +156,14 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
 
       {/* Main Tabs: General Data vs Clinical History */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="general" className="gap-2">
             <User className="h-4 w-4" />
             Datos Generales
+          </TabsTrigger>
+          <TabsTrigger value="packages" className="gap-2">
+            <Gift className="h-4 w-4" />
+            Paquetes
           </TabsTrigger>
           <TabsTrigger value="clinical" className="gap-2">
             <ClipboardList className="h-4 w-4" />
@@ -352,6 +357,13 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
                 </TabsContent>
               </Tabs>
             </div>
+          </div>
+        </TabsContent>
+
+        {/* Tab 2: Packages */}
+        <TabsContent value="packages" className="mt-0">
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <ClientPackages clientId={client.id} />
           </div>
         </TabsContent>
 

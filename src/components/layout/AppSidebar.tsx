@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Calendar, Scissors, Package, Menu, X, ShoppingCart, BarChart3, LogOut, UserCog } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Scissors, Package, Menu, X, ShoppingCart, BarChart3, LogOut, UserCog, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,11 @@ const navItems = [{
   path: "/pos",
   icon: ShoppingCart,
   adminOnly: false
+}, {
+  title: "Paquetes",
+  path: "/packages",
+  icon: Gift,
+  adminOnly: true
 }, {
   title: "Reportes",
   path: "/reports",
