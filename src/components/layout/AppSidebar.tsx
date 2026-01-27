@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, Calendar, Scissors, Package, Menu, X, ShoppingCart, BarChart3, LogOut, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -56,9 +56,12 @@ export function AppSidebar() {
     user
   } = useAuth();
   const { isAdmin } = useUserRole();
+  const navigate = useNavigate();
+  
   const handleLogout = async () => {
     await signOut();
     toast.success("Sesión cerrada");
+    navigate("/auth");
   };
 
   // Filter nav items based on role
