@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Clock, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { WhatsAppButton } from "@/components/appointments/WhatsAppButton";
 import { cn } from "@/lib/utils";
 
 const statusConfig = {
@@ -99,9 +100,16 @@ export function TodayAppointments() {
                     {format(new Date(appointment.start_time), "HH:mm")} hrs
                   </p>
                 </div>
-                <Badge variant="outline" className={cn("text-xs shrink-0", status?.class)}>
-                  {status?.label}
-                </Badge>
+                <div className="flex items-center gap-2 shrink-0">
+                  <WhatsAppButton
+                    phone={appointment.clients?.phone ?? null}
+                    clientName={appointment.clients?.name || "Cliente"}
+                    appointmentTime={appointment.start_time}
+                  />
+                  <Badge variant="outline" className={cn("text-xs", status?.class)}>
+                    {status?.label}
+                  </Badge>
+                </div>
               </div>
             );
           })}
