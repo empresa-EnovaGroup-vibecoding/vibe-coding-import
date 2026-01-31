@@ -19,20 +19,13 @@ export function WhatsAppButton({
   if (!phone) return null;
 
   const handleClick = () => {
-    // Clean phone number (remove spaces, dashes, etc.)
-    const cleanPhone = phone.replace(/[\s\-\(\)\+]/g, "");
-    
-    // Format the appointment date and time
+    const cleanPhone = phone.replace(/[^0-9]/g, "");
     const date = new Date(appointmentTime);
     const formattedDate = format(date, "EEEE d 'de' MMMM", { locale: es });
     const formattedTime = format(date, "HH:mm");
-
-    // Create pre-filled message
     const message = encodeURIComponent(
       `Hola ${clientName}, te recordamos tu cita para el ${formattedDate} a las ${formattedTime} hrs. ¡Te esperamos!`
     );
-
-    // Open WhatsApp
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
   };
 
