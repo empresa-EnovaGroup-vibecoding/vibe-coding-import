@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save, ClipboardList, Gift } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save, ClipboardList, Gift, Pencil } from "lucide-react";
 import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { FacialEvaluationForm } from "./FacialEvaluationForm";
 import { EvaluationHistoryList } from "./EvaluationHistoryList";
 import { EvaluationDetail } from "./EvaluationDetail";
 import { ClientPackages } from "./ClientPackages";
+import { EditClientDialog } from "./EditClientDialog";
 
 const formatDate = (dateString: string | null | undefined, formatStr: string) => {
   if (!dateString) return "Fecha no disponible";
@@ -49,6 +50,7 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("detail");
   const [selectedEvaluationId, setSelectedEvaluationId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("general");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
     queryKey: ["clientAppointments", client.id],
@@ -148,11 +150,28 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{client.name}</h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{client.name}</h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsEditDialogOpen(true)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </div>
           <p className="text-muted-foreground mt-1">Ficha del cliente</p>
         </div>
       </div>
+
+      {/* Edit Client Dialog */}
+      <EditClientDialog
+        client={client}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
 
       {/* Main Tabs: General Data vs Clinical History */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
