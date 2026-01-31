@@ -65,8 +65,8 @@ export default function Services() {
       closeDialog();
       toast.success("Servicio creado exitosamente");
     },
-    onError: () => {
-      toast.error("Error al crear el servicio");
+    onError: (error: Error) => {
+      toast.error(`Error al crear el servicio: ${error.message}`);
     },
   });
 
@@ -87,8 +87,8 @@ export default function Services() {
       closeDialog();
       toast.success("Servicio actualizado exitosamente");
     },
-    onError: () => {
-      toast.error("Error al actualizar el servicio");
+    onError: (error: Error) => {
+      toast.error(`Error al actualizar el servicio: ${error.message}`);
     },
   });
 
@@ -101,8 +101,8 @@ export default function Services() {
       queryClient.invalidateQueries({ queryKey: ["services"] });
       toast.success("Servicio eliminado exitosamente");
     },
-    onError: () => {
-      toast.error("Error al eliminar el servicio");
+    onError: (error: Error) => {
+      toast.error(`Error al eliminar el servicio: ${error.message}`);
     },
   });
 
