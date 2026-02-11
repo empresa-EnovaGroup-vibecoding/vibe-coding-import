@@ -3,46 +3,57 @@ import { supabase } from "@/integrations/supabase/client";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { TodayAppointments } from "@/components/dashboard/TodayAppointments";
 import { Calendar, Users, Package, AlertTriangle } from "lucide-react";
+import { useTenant } from "@/hooks/useTenant";
 
 export default function Dashboard() {
+  const { tenantId } = useTenant();
   const today = new Date();
   const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
   const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
 
   const { data: todayAppointmentsCount } = useQuery({
-    queryKey: ["todayAppointmentsCount"],
+    queryKey: ["todayAppointmentsCount", tenantId],
     queryFn: async () => {
+      if (!tenantId) return 0;
       const { count, error } = await supabase
         .from("appointments")
         .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
         .gte("start_time", startOfDay)
         .lte("start_time", endOfDay);
       if (error) throw error;
       return count || 0;
     },
+    enabled: !!tenantId,
   });
 
   const { data: totalClients } = useQuery({
-    queryKey: ["totalClients"],
+    queryKey: ["totalClients", tenantId],
     queryFn: async () => {
+      if (!tenantId) return 0;
       const { count, error } = await supabase
         .from("clients")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenantId);
       if (error) throw error;
       return count || 0;
     },
+    enabled: !!tenantId,
   });
 
   const { data: lowStockCount } = useQuery({
-    queryKey: ["lowStockCount"],
+    queryKey: ["lowStockCount", tenantId],
     queryFn: async () => {
+      if (!tenantId) return 0;
       const { count, error } = await supabase
         .from("inventory")
         .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
         .lt("stock_level", 5);
       if (error) throw error;
       return count || 0;
     },
+    enabled: !!tenantId,
   });
 
   return (

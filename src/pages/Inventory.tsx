@@ -24,7 +24,7 @@ import { Plus, Package, Search, Pencil, Trash2, AlertTriangle, FileUp } from "lu
 import InventoryImportModal from "@/components/inventory/InventoryImportModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useTenant } from "@/hooks/useTenant";
 
 interface InventoryItem {
   id: string;
@@ -37,6 +37,7 @@ interface InventoryItem {
 }
 
 export default function Inventory() {
+  const { isOwner, tenantId } = useTenant();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -50,23 +51,26 @@ export default function Inventory() {
     supplier: "",
   });
   const queryClient = useQueryClient();
-  const { isAdmin } = useUserRole();
 
   // Use secure view that conditionally shows cost_price based on role
   const { data: inventory, isLoading } = useQuery({
-    queryKey: ["inventory"],
+    queryKey: ["inventory", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("inventory_staff_view")
         .select("*")
+        .eq("tenant_id", tenantId)
         .order("name", { ascending: true });
       if (error) throw error;
       return data as InventoryItem[];
     },
+    enabled: !!tenantId,
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase.from("inventory").insert([{
         name: data.name,
         sku: data.sku || null,
@@ -74,12 +78,13 @@ export default function Inventory() {
         cost_price: parseFloat(data.cost_price) || 0,
         sale_price: parseFloat(data.sale_price) || 0,
         supplier: data.supplier || null,
+        tenant_id: tenantId,
       }]);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["lowStockCount"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["lowStockCount", tenantId] });
       closeDialog();
       toast.success("Producto creado exitosamente");
     },
@@ -90,6 +95,7 @@ export default function Inventory() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase
         .from("inventory")
         .update({
@@ -100,12 +106,13 @@ export default function Inventory() {
           sale_price: parseFloat(data.sale_price) || 0,
           supplier: data.supplier || null,
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["lowStockCount"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["lowStockCount", tenantId] });
       closeDialog();
       toast.success("Producto actualizado exitosamente");
     },
@@ -116,12 +123,17 @@ export default function Inventory() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("inventory").delete().eq("id", id);
+      if (!tenantId) throw new Error("No tenant ID");
+      const { error } = await supabase
+        .from("inventory")
+        .delete()
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["lowStockCount"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["lowStockCount", tenantId] });
       toast.success("Producto eliminado exitosamente");
     },
     onError: () => {
@@ -237,7 +249,7 @@ export default function Inventory() {
                     min="0"
                   />
                 </div>
-                {isAdmin && (
+                {isOwner && (
                   <div className="space-y-2">
                     <Label htmlFor="cost_price">Precio Costo (Q)</Label>
                     <Input
@@ -289,7 +301,7 @@ export default function Inventory() {
         <InventoryImportModal
           open={isImportModalOpen}
           onOpenChange={setIsImportModalOpen}
-          onImportComplete={() => queryClient.invalidateQueries({ queryKey: ["inventory"] })}
+          onImportComplete={() => queryClient.invalidateQueries({ queryKey: ["inventory", tenantId] })}
         />
       </div>
 
@@ -324,7 +336,7 @@ export default function Inventory() {
                   <TableHead>Producto</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Stock</TableHead>
-                  {isAdmin && <TableHead className="hidden sm:table-cell">P. Costo</TableHead>}
+                  {isOwner && <TableHead className="hidden sm:table-cell">P. Costo</TableHead>}
                   <TableHead>P. Venta</TableHead>
                   <TableHead className="hidden md:table-cell">Proveedor</TableHead>
                   <TableHead className="w-24">Acciones</TableHead>
@@ -360,7 +372,7 @@ export default function Inventory() {
                         <Badge variant="secondary">{item.stock_level}</Badge>
                       )}
                     </TableCell>
-                    {isAdmin && (
+                    {isOwner && (
                       <TableCell className="hidden sm:table-cell text-muted-foreground">
                         Q{Number(item.cost_price || 0).toFixed(2)}
                       </TableCell>

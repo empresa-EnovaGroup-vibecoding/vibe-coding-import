@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Plus, MoreHorizontal, Pencil, Trash2, Users, Mail, Phone } from "lucide-react";
 import { TeamMemberFormDialog } from "./TeamMemberFormDialog";
 import { toast } from "sonner";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useTenant } from "@/hooks/useTenant";
 import type { Tables } from "@/integrations/supabase/types";
 import {
   AlertDialog,
@@ -28,7 +28,7 @@ export function TeamMemberList() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<Tables<"team_members"> | null>(null);
   const queryClient = useQueryClient();
-  const { isAdmin } = useUserRole();
+  const { isOwner, tenantId } = useTenant();
 
   const { data: members, isLoading } = useQuery({
     queryKey: ["teamMembers"],
@@ -95,7 +95,7 @@ export function TeamMemberList() {
             Gestiona los especialistas y miembros del equipo
           </p>
         </div>
-        {isAdmin && (
+        {isOwner && (
           <Button onClick={handleAdd} className="gap-2">
             <Plus className="h-4 w-4" />
             Agregar Miembro
@@ -149,7 +149,7 @@ export function TeamMemberList() {
                   <TableHead>Rol / Especialidad</TableHead>
                   <TableHead className="hidden md:table-cell">Contacto</TableHead>
                   <TableHead>Estado</TableHead>
-                  {isAdmin && <TableHead className="w-[70px]"></TableHead>}
+                  {isOwner && <TableHead className="w-[70px]"></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -187,7 +187,7 @@ export function TeamMemberList() {
                         {member.is_active ? "Activo" : "Inactivo"}
                       </Badge>
                     </TableCell>
-                    {isAdmin && (
+                    {isOwner && (
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

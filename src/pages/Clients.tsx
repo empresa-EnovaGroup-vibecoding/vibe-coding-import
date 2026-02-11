@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,7 @@ interface Client {
 }
 
 export default function Clients() {
+  const { tenantId } = useTenant();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -54,30 +56,35 @@ export default function Clients() {
   const queryClient = useQueryClient();
 
   const { data: clients, isLoading } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("clients")
         .select("*")
+        .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Client[];
     },
+    enabled: !!tenantId,
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase.from("clients").insert([{
         name: data.name,
         phone: data.phone || null,
         email: data.email || null,
         notes: data.notes || null,
+        tenant_id: tenantId,
       }]);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
-      queryClient.invalidateQueries({ queryKey: ["totalClients"] });
+      queryClient.invalidateQueries({ queryKey: ["clients", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["totalClients", tenantId] });
       setIsDialogOpen(false);
       setFormData({ name: "", phone: "", email: "", notes: "" });
       toast.success("Cliente creado exitosamente");

@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Plus, MoreHorizontal, Pencil, Trash2, DoorOpen } from "lucide-react";
 import { CabinFormDialog } from "./CabinFormDialog";
 import { toast } from "sonner";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useTenant } from "@/hooks/useTenant";
 import type { Tables } from "@/integrations/supabase/types";
 import {
   AlertDialog,
@@ -28,7 +28,7 @@ export function CabinList() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [cabinToDelete, setCabinToDelete] = useState<Tables<"cabins"> | null>(null);
   const queryClient = useQueryClient();
-  const { isAdmin } = useUserRole();
+  const { isOwner, tenantId } = useTenant();
 
   const { data: cabins, isLoading } = useQuery({
     queryKey: ["cabins"],
@@ -95,7 +95,7 @@ export function CabinList() {
             Gestiona los espacios de servicio disponibles
           </p>
         </div>
-        {isAdmin && (
+        {isOwner && (
           <Button onClick={handleAdd} className="gap-2">
             <Plus className="h-4 w-4" />
             Agregar Cabina
@@ -148,7 +148,7 @@ export function CabinList() {
                   <TableHead>Nombre</TableHead>
                   <TableHead className="hidden md:table-cell">Descripción</TableHead>
                   <TableHead>Estado</TableHead>
-                  {isAdmin && <TableHead className="w-[70px]"></TableHead>}
+                  {isOwner && <TableHead className="w-[70px]"></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -174,7 +174,7 @@ export function CabinList() {
                         {cabin.is_active ? "Activa" : "Inactiva"}
                       </Badge>
                     </TableCell>
-                    {isAdmin && (
+                    {isOwner && (
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole, AppRole } from "@/hooks/useUserRole";
+import { useTenant } from "@/hooks/useTenant";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,112 +21,92 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface UserWithRole {
+type TenantRole = "owner" | "admin" | "member";
+
+interface TenantMember {
   id: string;
+  user_id: string;
   email: string;
   full_name: string | null;
-  role: AppRole | null;
-  role_id: string | null;
+  role: TenantRole;
   created_at: string;
 }
 
 export default function UserManagement() {
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { isOwner, tenantId, loading: roleLoading } = useTenant();
   const navigate = useNavigate();
-  const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [members, setMembers] = useState<TenantMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!roleLoading && !isAdmin) {
+    if (!roleLoading && !isOwner) {
       toast.error("No tienes permiso para acceder a esta página");
       navigate("/");
     }
-  }, [isAdmin, roleLoading, navigate]);
+  }, [isOwner, roleLoading, navigate]);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchUsers();
+    if (isOwner && tenantId) {
+      fetchMembers();
     }
-  }, [isAdmin]);
+  }, [isOwner, tenantId]);
 
-  const fetchUsers = async () => {
+  const fetchMembers = async () => {
     try {
-      // Fetch profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, created_at");
+      if (!tenantId) return;
 
-      if (profilesError) throw profilesError;
+      // Fetch tenant members with profile info
+      const { data: tenantMembers, error: membersError } = await supabase
+        .from("tenant_members")
+        .select(`
+          id,
+          user_id,
+          role,
+          created_at,
+          profiles (
+            full_name
+          )
+        `)
+        .eq("tenant_id", tenantId);
 
-      // Fetch all roles (admin can see all)
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("id, user_id, role");
+      if (membersError) throw membersError;
 
-      if (rolesError) throw rolesError;
+      // Map to TenantMember format
+      const formattedMembers: TenantMember[] = (tenantMembers || []).map((member: any) => ({
+        id: member.id,
+        user_id: member.user_id,
+        email: member.user_id, // user_id serves as email identifier
+        full_name: member.profiles?.full_name || null,
+        role: member.role as TenantRole,
+        created_at: member.created_at,
+      }));
 
-      // Combine data - we need to get emails from auth, but we can't directly
-      // So we'll use the profile's user_id and show what we have
-      const combinedUsers: UserWithRole[] = (profiles || []).map((profile) => {
-        const userRole = roles?.find((r) => r.user_id === profile.user_id);
-        return {
-          id: profile.user_id,
-          email: profile.user_id, // We'll need to improve this
-          full_name: profile.full_name,
-          role: userRole?.role as AppRole | null,
-          role_id: userRole?.id || null,
-          created_at: profile.created_at,
-        };
-      });
-
-      // Also add users with roles but no profile
-      roles?.forEach((role) => {
-        if (!combinedUsers.find((u) => u.id === role.user_id)) {
-          combinedUsers.push({
-            id: role.user_id,
-            email: role.user_id,
-            full_name: null,
-            role: role.role as AppRole,
-            role_id: role.id,
-            created_at: new Date().toISOString(),
-          });
-        }
-      });
-
-      setUsers(combinedUsers);
+      setMembers(formattedMembers);
     } catch (error: any) {
-      console.error("Error fetching users:", error);
-      toast.error("Error al cargar usuarios");
+      console.error("Error fetching members:", error);
+      toast.error("Error al cargar miembros");
     } finally {
       setLoading(false);
     }
   };
 
-  const assignRole = async (userId: string, role: AppRole) => {
-    setUpdating(userId);
+  const assignRole = async (memberId: string, role: TenantRole) => {
+    setUpdating(memberId);
     try {
-      const existingUser = users.find((u) => u.id === userId);
+      if (!tenantId) throw new Error("No tenant ID");
 
-      if (existingUser?.role_id) {
-        // Update existing role
-        const { error } = await supabase
-          .from("user_roles")
-          .update({ role })
-          .eq("id", existingUser.role_id);
+      const { error } = await supabase
+        .from("tenant_members")
+        .update({ role })
+        .eq("id", memberId)
+        .eq("tenant_id", tenantId);
 
-        if (error) throw error;
-      } else {
-        // Insert new role
-        const { error } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role });
+      if (error) throw error;
 
-        if (error) throw error;
-      }
-
-      toast.success(`Rol actualizado a ${role === "admin" ? "Administrador" : "Staff"}`);
-      fetchUsers();
+      const roleLabel = role === "owner" ? "Propietario" : role === "admin" ? "Administrador" : "Miembro";
+      toast.success(`Rol actualizado a ${roleLabel}`);
+      fetchMembers();
     } catch (error: any) {
       console.error("Error assigning role:", error);
       toast.error(error.message || "Error al asignar rol");
@@ -135,29 +115,37 @@ export default function UserManagement() {
     }
   };
 
-  const removeRole = async (userId: string, roleId: string) => {
-    setUpdating(userId);
+  const removeMember = async (memberId: string) => {
+    setUpdating(memberId);
     try {
+      if (!tenantId) throw new Error("No tenant ID");
+
       const { error } = await supabase
-        .from("user_roles")
+        .from("tenant_members")
         .delete()
-        .eq("id", roleId);
+        .eq("id", memberId)
+        .eq("tenant_id", tenantId);
 
       if (error) throw error;
 
-      toast.success("Rol eliminado");
-      fetchUsers();
+      toast.success("Miembro eliminado");
+      fetchMembers();
     } catch (error: any) {
-      console.error("Error removing role:", error);
-      toast.error(error.message || "Error al eliminar rol");
+      console.error("Error removing member:", error);
+      toast.error(error.message || "Error al eliminar miembro");
     } finally {
       setUpdating(null);
     }
   };
 
-  const getRoleBadge = (role: AppRole | null) => {
-    if (!role) {
-      return <Badge variant="outline" className="text-muted-foreground">Sin rol</Badge>;
+  const getRoleBadge = (role: TenantRole) => {
+    if (role === "owner") {
+      return (
+        <Badge className="bg-purple-600 text-white">
+          <Shield className="mr-1 h-3 w-3" />
+          Propietario
+        </Badge>
+      );
     }
     if (role === "admin") {
       return (
@@ -170,7 +158,7 @@ export default function UserManagement() {
     return (
       <Badge variant="secondary">
         <Users className="mr-1 h-3 w-3" />
-        Staff
+        Miembro
       </Badge>
     );
   };
@@ -183,13 +171,13 @@ export default function UserManagement() {
     );
   }
 
-  if (!isAdmin) {
+  if (!isOwner) {
     return null;
   }
 
-  const adminsCount = users.filter((u) => u.role === "admin").length;
-  const staffCount = users.filter((u) => u.role === "staff").length;
-  const pendingCount = users.filter((u) => !u.role).length;
+  const ownersCount = members.filter((m) => m.role === "owner").length;
+  const adminsCount = members.filter((m) => m.role === "admin").length;
+  const membersCount = members.filter((m) => m.role === "member").length;
 
   return (
     <div className="space-y-6">
@@ -207,6 +195,15 @@ export default function UserManagement() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Propietarios</CardTitle>
+            <Shield className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{ownersCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Administradores</CardTitle>
             <Shield className="h-4 w-4 text-primary" />
           </CardHeader>
@@ -216,20 +213,11 @@ export default function UserManagement() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Staff</CardTitle>
+            <CardTitle className="text-sm font-medium">Miembros</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{staffCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-            <UserCog className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingCount}</div>
+            <div className="text-2xl font-bold">{membersCount}</div>
           </CardContent>
         </Card>
       </div>
@@ -243,9 +231,9 @@ export default function UserManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {users.length === 0 ? (
+          {members.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No hay usuarios registrados aún
+              No hay miembros en este tenant aún
             </div>
           ) : (
             <Table>
@@ -258,43 +246,44 @@ export default function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
+                {members.map((member) => (
+                  <TableRow key={member.id}>
                     <TableCell>
                       <div>
                         <p className="font-medium">
-                          {user.full_name || "Sin nombre"}
+                          {member.full_name || "Sin nombre"}
                         </p>
                         <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                          ID: {user.id.slice(0, 8)}...
+                          ID: {member.user_id.slice(0, 8)}...
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell>{getRoleBadge(user.role)}</TableCell>
+                    <TableCell>{getRoleBadge(member.role)}</TableCell>
                     <TableCell>
-                      {new Date(user.created_at).toLocaleDateString("es-ES")}
+                      {new Date(member.created_at).toLocaleDateString("es-ES")}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Select
-                          value={user.role || "none"}
+                          value={member.role}
                           onValueChange={(value) => {
-                            if (value !== "none") {
-                              assignRole(user.id, value as AppRole);
-                            }
+                            assignRole(member.id, value as TenantRole);
                           }}
-                          disabled={updating === user.id}
+                          disabled={updating === member.id}
                         >
                           <SelectTrigger className="w-[140px]">
-                            {updating === user.id ? (
+                            {updating === member.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              <SelectValue placeholder="Asignar rol" />
+                              <SelectValue placeholder="Cambiar rol" />
                             )}
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none" disabled>
-                              Seleccionar rol
+                            <SelectItem value="owner">
+                              <div className="flex items-center gap-2">
+                                <Shield className="h-4 w-4" />
+                                Propietario
+                              </div>
                             </SelectItem>
                             <SelectItem value="admin">
                               <div className="flex items-center gap-2">
@@ -302,48 +291,46 @@ export default function UserManagement() {
                                 Administrador
                               </div>
                             </SelectItem>
-                            <SelectItem value="staff">
+                            <SelectItem value="member">
                               <div className="flex items-center gap-2">
                                 <Users className="h-4 w-4" />
-                                Staff
+                                Miembro
                               </div>
                             </SelectItem>
                           </SelectContent>
                         </Select>
 
-                        {user.role_id && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="text-destructive hover:text-destructive"
-                                disabled={updating === user.id}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              disabled={updating === member.id || member.role === "owner"}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                ¿Eliminar miembro del tenant?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                El miembro perderá todo acceso a este tenant.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => removeMember(member.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  ¿Eliminar rol de usuario?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  El usuario perderá todo acceso al sistema hasta que se le asigne un nuevo rol.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => removeRole(user.id, user.role_id!)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Eliminar rol
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
+                                Eliminar miembro
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -360,32 +347,44 @@ export default function UserManagement() {
           <CardTitle>Permisos por Rol</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-purple-600" />
+                <span className="font-semibold">Propietario</span>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-7">
+                <li>✓ Acceso total al tenant</li>
+                <li>✓ Gestión de miembros</li>
+                <li>✓ Configuración del tenant</li>
+                <li>✓ Ver precios de costo</li>
+                <li>✓ Todos los reportes</li>
+              </ul>
+            </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />
                 <span className="font-semibold">Administrador</span>
               </div>
               <ul className="text-sm text-muted-foreground space-y-1 ml-7">
-                <li>✓ Acceso completo a todas las funciones</li>
-                <li>✓ Gestión de usuarios y roles</li>
-                <li>✓ CRUD completo en inventario y servicios</li>
-                <li>✓ Eliminación de registros</li>
-                <li>✓ Acceso a reportes</li>
+                <li>✓ CRUD completo</li>
+                <li>✓ Gestión de inventario</li>
+                <li>✓ Reportes completos</li>
+                <li>○ Sin gestión de miembros</li>
+                <li>○ Sin precios de costo</li>
               </ul>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-muted-foreground" />
-                <span className="font-semibold">Staff</span>
+                <span className="font-semibold">Miembro</span>
               </div>
               <ul className="text-sm text-muted-foreground space-y-1 ml-7">
-                <li>✓ Gestión de clientes y citas</li>
-                <li>✓ Registro de ventas (POS)</li>
-                <li>✓ Evaluaciones faciales</li>
+                <li>✓ Gestión de citas</li>
+                <li>✓ Registro de ventas</li>
                 <li>○ Solo lectura en inventario</li>
-                <li>○ Solo lectura en servicios</li>
-                <li>✗ Sin acceso a eliminación</li>
+                <li>✗ Sin eliminación</li>
+                <li>✗ Sin reportes</li>
               </ul>
             </div>
           </div>

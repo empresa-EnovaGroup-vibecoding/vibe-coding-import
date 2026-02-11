@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, isSameDay, differenceInMinutes } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useTenant } from "@/hooks/useTenant";
 
 interface Appointment {
   id: string;
@@ -83,6 +84,7 @@ const statusConfig = {
 };
 
 export default function Appointments() {
+  const { tenantId } = useTenant();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -110,8 +112,9 @@ export default function Appointments() {
   const monthEnd = endOfMonth(selectedDate);
 
   const { data: appointments, isLoading } = useQuery({
-    queryKey: ["appointments", monthStart.toISOString()],
+    queryKey: ["appointments", monthStart.toISOString(), tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("appointments")
         .select(`
@@ -125,6 +128,7 @@ export default function Appointments() {
             services (name, duration)
           )
         `)
+        .eq("tenant_id", tenantId)
         .gte("start_time", monthStart.toISOString())
         .lte("start_time", monthEnd.toISOString())
         .order("start_time", { ascending: true });
@@ -132,56 +136,69 @@ export default function Appointments() {
       if (error) throw error;
       return data as Appointment[];
     },
+    enabled: !!tenantId,
   });
 
   const { data: clients } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("clients")
         .select("id, name, phone")
+        .eq("tenant_id", tenantId)
         .order("name", { ascending: true });
       if (error) throw error;
       return data as Client[];
     },
+    enabled: !!tenantId,
   });
 
   const { data: services } = useQuery({
-    queryKey: ["services"],
+    queryKey: ["services", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("services")
         .select("id, name, price, duration")
+        .eq("tenant_id", tenantId)
         .order("name", { ascending: true });
       if (error) throw error;
       return data as Service[];
     },
+    enabled: !!tenantId,
   });
 
   const { data: teamMembers } = useQuery({
-    queryKey: ["teamMembers"],
+    queryKey: ["teamMembers", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("team_members")
         .select("id, name, role")
+        .eq("tenant_id", tenantId)
         .eq("is_active", true)
         .order("name", { ascending: true });
       if (error) throw error;
       return data as TeamMember[];
     },
+    enabled: !!tenantId,
   });
 
   const { data: cabins } = useQuery({
-    queryKey: ["cabins"],
+    queryKey: ["cabins", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("cabins")
         .select("id, name")
+        .eq("tenant_id", tenantId)
         .eq("is_active", true)
         .order("name", { ascending: true });
       if (error) throw error;
       return data as Cabin[];
     },
+    enabled: !!tenantId,
   });
 
   // Check for upcoming appointments and show alerts
@@ -207,8 +224,9 @@ export default function Appointments() {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      if (!tenantId) throw new Error("No tenant ID");
       const startTime = new Date(`${data.date}T${data.time}`);
-      
+
       const selectedServicesList = services?.filter(s => data.selectedServices.includes(s.id)) || [];
       const totalPrice = selectedServicesList.reduce((sum, s) => sum + Number(s.price), 0);
       const totalDuration = selectedServicesList.reduce((sum, s) => sum + s.duration, 0);
@@ -225,6 +243,7 @@ export default function Appointments() {
           total_price: totalPrice,
           specialist_id: data.specialist_id || null,
           cabin_id: data.cabin_id || null,
+          tenant_id: tenantId,
         }])
         .select()
         .single();
@@ -249,9 +268,9 @@ export default function Appointments() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["todayAppointments"] });
-      queryClient.invalidateQueries({ queryKey: ["todayAppointmentsCount"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments", undefined, tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["todayAppointments", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["todayAppointmentsCount", tenantId] });
       closeDialog();
       toast.success("Cita creada exitosamente");
     },
@@ -262,15 +281,17 @@ export default function Appointments() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase
         .from("appointments")
         .update({ status: status as "pending" | "confirmed" | "completed" | "cancelled" | "in_room" | "no_show" })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["todayAppointments"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments", undefined, tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["todayAppointments", tenantId] });
       toast.success("Estado actualizado");
     },
     onError: () => {
@@ -280,13 +301,18 @@ export default function Appointments() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("appointments").delete().eq("id", id);
+      if (!tenantId) throw new Error("No tenant ID");
+      const { error } = await supabase
+        .from("appointments")
+        .delete()
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["todayAppointments"] });
-      queryClient.invalidateQueries({ queryKey: ["todayAppointmentsCount"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments", undefined, tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["todayAppointments", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["todayAppointmentsCount", tenantId] });
       toast.success("Cita eliminada exitosamente");
     },
     onError: () => {

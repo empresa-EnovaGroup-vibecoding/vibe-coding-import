@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTenant } from "@/hooks/useTenant";
 
 interface CartItem {
   id: string;
@@ -79,6 +80,7 @@ interface Client {
 }
 
 export default function POS() {
+  const { tenantId } = useTenant();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [notes, setNotes] = useState("");
@@ -88,43 +90,53 @@ export default function POS() {
   const queryClient = useQueryClient();
 
   const { data: products } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("inventory")
         .select("id, name, sku, sale_price, stock_level, qr_code")
+        .eq("tenant_id", tenantId)
         .order("name", { ascending: true });
       if (error) throw error;
       return data as Product[];
     },
+    enabled: !!tenantId,
   });
 
   const { data: services } = useQuery({
-    queryKey: ["services"],
+    queryKey: ["services", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("services")
         .select("id, name, price, duration")
+        .eq("tenant_id", tenantId)
         .order("name", { ascending: true });
       if (error) throw error;
       return data as Service[];
     },
+    enabled: !!tenantId,
   });
 
   const { data: clients } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("clients")
         .select("id, name, phone")
+        .eq("tenant_id", tenantId)
         .order("name", { ascending: true });
       if (error) throw error;
       return data as Client[];
     },
+    enabled: !!tenantId,
   });
 
   const saleMutation = useMutation({
     mutationFn: async () => {
+      if (!tenantId) throw new Error("No tenant ID");
       // Create sale record
       const { data: sale, error: saleError } = await supabase
         .from("sales")
@@ -133,6 +145,7 @@ export default function POS() {
             client_id: selectedClient || null,
             total_amount: calculateTotal(),
             notes: notes || null,
+            tenant_id: tenantId,
           },
         ])
         .select()
@@ -149,6 +162,7 @@ export default function POS() {
         quantity: item.quantity,
         unit_price: item.unitPrice,
         subtotal: item.subtotal,
+        tenant_id: tenantId,
       }));
 
       const { error: itemsError } = await supabase
@@ -165,7 +179,8 @@ export default function POS() {
             const { error: updateError } = await supabase
               .from("inventory")
               .update({ stock_level: product.stock_level - item.quantity })
-              .eq("id", item.productId);
+              .eq("id", item.productId)
+              .eq("tenant_id", tenantId);
 
             if (updateError) throw updateError;
           }
@@ -175,9 +190,9 @@ export default function POS() {
       return sale;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["lowStockCount"] });
+      queryClient.invalidateQueries({ queryKey: ["products", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["lowStockCount", tenantId] });
       setCart([]);
       setSelectedClient("");
       setNotes("");

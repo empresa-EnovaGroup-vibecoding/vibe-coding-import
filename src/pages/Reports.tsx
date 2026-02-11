@@ -19,6 +19,7 @@ import {
 import { TrendingUp, Users, Scissors, DollarSign, Calendar } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { useTenant } from "@/hooks/useTenant";
 
 const COLORS = [
   "hsl(221, 83%, 53%)",
@@ -30,10 +31,13 @@ const COLORS = [
 ];
 
 export default function Reports() {
+  const { tenantId } = useTenant();
+
   // Get monthly revenue for last 6 months
   const { data: monthlyRevenue, isLoading: loadingRevenue } = useQuery({
-    queryKey: ["monthlyRevenue"],
+    queryKey: ["monthlyRevenue", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const months = [];
       for (let i = 5; i >= 0; i--) {
         const date = subMonths(new Date(), i);
@@ -44,6 +48,7 @@ export default function Reports() {
         const { data: sales } = await supabase
           .from("sales")
           .select("total_amount")
+          .eq("tenant_id", tenantId)
           .gte("created_at", start)
           .lte("created_at", end);
 
@@ -51,6 +56,7 @@ export default function Reports() {
         const { data: appointments } = await supabase
           .from("appointments")
           .select("total_price")
+          .eq("tenant_id", tenantId)
           .eq("status", "completed")
           .gte("start_time", start)
           .lte("start_time", end);
@@ -68,18 +74,22 @@ export default function Reports() {
       }
       return months;
     },
+    enabled: !!tenantId,
   });
 
   // Get popular services
   const { data: popularServices, isLoading: loadingServices } = useQuery({
-    queryKey: ["popularServices"],
+    queryKey: ["popularServices", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("appointment_services")
         .select(`
           service_id,
+          tenant_id,
           services (name)
-        `);
+        `)
+        .eq("tenant_id", tenantId);
 
       if (error) throw error;
 
@@ -97,19 +107,22 @@ export default function Reports() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 6);
     },
+    enabled: !!tenantId,
   });
 
   // Get frequent clients
   const { data: frequentClients, isLoading: loadingClients } = useQuery({
-    queryKey: ["frequentClients"],
+    queryKey: ["frequentClients", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       // Get appointment counts per client
       const { data: appointments } = await supabase
         .from("appointments")
         .select(`
           client_id,
           clients (name)
-        `);
+        `)
+        .eq("tenant_id", tenantId);
 
       // Get sales counts per client
       const { data: sales } = await supabase
@@ -119,6 +132,7 @@ export default function Reports() {
           total_amount,
           clients (name)
         `)
+        .eq("tenant_id", tenantId)
         .not("client_id", "is", null);
 
       const clientStats: Record<string, { 
@@ -157,12 +171,14 @@ export default function Reports() {
         .sort((a, b) => (b.appointments + b.purchases) - (a.appointments + a.purchases))
         .slice(0, 10);
     },
+    enabled: !!tenantId,
   });
 
   // Get summary stats
   const { data: summaryStats } = useQuery({
-    queryKey: ["summaryStats"],
+    queryKey: ["summaryStats", tenantId],
     queryFn: async () => {
+      if (!tenantId) return null;
       const thisMonth = startOfMonth(new Date()).toISOString();
       const lastMonth = startOfMonth(subMonths(new Date(), 1)).toISOString();
       const lastMonthEnd = endOfMonth(subMonths(new Date(), 1)).toISOString();
@@ -171,11 +187,13 @@ export default function Reports() {
       const { data: thisMonthSales } = await supabase
         .from("sales")
         .select("total_amount")
+        .eq("tenant_id", tenantId)
         .gte("created_at", thisMonth);
 
       const { data: thisMonthAppointments } = await supabase
         .from("appointments")
         .select("total_price")
+        .eq("tenant_id", tenantId)
         .eq("status", "completed")
         .gte("start_time", thisMonth);
 
@@ -183,12 +201,14 @@ export default function Reports() {
       const { data: lastMonthSales } = await supabase
         .from("sales")
         .select("total_amount")
+        .eq("tenant_id", tenantId)
         .gte("created_at", lastMonth)
         .lte("created_at", lastMonthEnd);
 
       const { data: lastMonthAppointments } = await supabase
         .from("appointments")
         .select("total_price")
+        .eq("tenant_id", tenantId)
         .eq("status", "completed")
         .gte("start_time", lastMonth)
         .lte("start_time", lastMonthEnd);
@@ -208,12 +228,14 @@ export default function Reports() {
       // Total clients
       const { count: totalClients } = await supabase
         .from("clients")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenantId);
 
       // Total appointments this month
       const { count: appointmentsThisMonth } = await supabase
         .from("appointments")
         .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
         .gte("start_time", thisMonth);
 
       return {
@@ -224,6 +246,7 @@ export default function Reports() {
         appointmentsThisMonth: appointmentsThisMonth || 0,
       };
     },
+    enabled: !!tenantId,
   });
 
   const totalRevenue = monthlyRevenue?.reduce((sum, m) => sum + m.total, 0) || 0;

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useTenant } from "@/hooks/useTenant";
 import { toast } from "sonner";
 
 const navItems = [{
@@ -75,17 +75,17 @@ export function AppSidebar() {
     signOut,
     user
   } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { isOwner, isSuperAdmin, tenant } = useTenant();
   const navigate = useNavigate();
-  
+
   const handleLogout = async () => {
     await signOut();
     toast.success("Sesión cerrada");
     navigate("/auth");
   };
 
-  // Filter nav items based on role
-  const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+  // Filter nav items: owners see everything, staff sees non-admin items
+  const filteredNavItems = navItems.filter(item => !item.adminOnly || isOwner);
 
   return <>
       {/* Mobile menu button */}
@@ -104,8 +104,10 @@ export function AppSidebar() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
               <Scissors className="h-5 w-5 text-sidebar-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-primary-foreground">Agenda PRO</h1>
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold text-primary-foreground truncate">
+                {tenant?.name ?? "Agenda PRO"}
+              </h1>
               <p className="text-xs text-sidebar-foreground/60">Sistema de gestión</p>
             </div>
           </div>
@@ -124,6 +126,16 @@ export function AppSidebar() {
 
           {/* User & Logout */}
           <div className="border-t border-sidebar-border p-4 space-y-3 mt-4">
+            {isSuperAdmin && (
+              <NavLink
+                to="/super-admin"
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium bg-red-900/50 text-red-200 hover:bg-red-900 transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
+                <Crown className="h-4 w-4" />
+                Super Admin Panel
+              </NavLink>
+            )}
             {user && <div className="px-3 py-2">
                 <p className="text-xs text-white/60">Conectado como</p>
                 <p className="text-sm font-medium text-white truncate">

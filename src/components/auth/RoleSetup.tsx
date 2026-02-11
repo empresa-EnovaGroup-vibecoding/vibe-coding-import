@@ -21,16 +21,16 @@ export function RoleSetup() {
 
     const checkIfFirstUser = async () => {
       try {
-        // Check if there are any existing roles
-        const { count, error } = await supabase
-          .from("user_roles")
-          .select("*", { count: "exact", head: true });
+        // Use secure SECURITY DEFINER function that bypasses RLS
+        // This correctly checks ALL admin roles, not just the current user's
+        const { data, error } = await supabase.rpc("check_admin_exists");
 
         if (error) {
-          console.error("Error checking roles:", error);
+          console.error("Error checking admin status:", error);
           setIsFirstUser(false);
         } else {
-          setIsFirstUser(count === 0);
+          // If no admin exists, this is the first user
+          setIsFirstUser(data === false);
         }
       } catch (err) {
         console.error("Error:", err);

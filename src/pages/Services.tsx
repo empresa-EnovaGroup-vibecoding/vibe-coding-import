@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,7 @@ interface Service {
 }
 
 export default function Services() {
+  const { tenantId } = useTenant();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [formData, setFormData] = useState({
@@ -40,28 +42,33 @@ export default function Services() {
   const queryClient = useQueryClient();
 
   const { data: services, isLoading } = useQuery({
-    queryKey: ["services"],
+    queryKey: ["services", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("services")
         .select("*")
+        .eq("tenant_id", tenantId)
         .order("name", { ascending: true });
       if (error) throw error;
       return data as Service[];
     },
+    enabled: !!tenantId,
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase.from("services").insert([{
         name: data.name,
         duration: parseInt(data.duration),
         price: parseFloat(data.price) || 0,
+        tenant_id: tenantId,
       }]);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+      queryClient.invalidateQueries({ queryKey: ["services", tenantId] });
       closeDialog();
       toast.success("Servicio creado exitosamente");
     },
@@ -72,6 +79,7 @@ export default function Services() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase
         .from("services")
         .update({
@@ -79,11 +87,12 @@ export default function Services() {
           duration: parseInt(data.duration),
           price: parseFloat(data.price) || 0,
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+      queryClient.invalidateQueries({ queryKey: ["services", tenantId] });
       closeDialog();
       toast.success("Servicio actualizado exitosamente");
     },
@@ -94,11 +103,16 @@ export default function Services() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("services").delete().eq("id", id);
+      if (!tenantId) throw new Error("No tenant ID");
+      const { error } = await supabase
+        .from("services")
+        .delete()
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+      queryClient.invalidateQueries({ queryKey: ["services", tenantId] });
       toast.success("Servicio eliminado exitosamente");
     },
     onError: (error: Error) => {
