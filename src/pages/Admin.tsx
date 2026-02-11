@@ -34,6 +34,7 @@ export default function Admin() {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState<string | null>(null);
+  const [emailMap, setEmailMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
@@ -44,7 +45,10 @@ export default function Admin() {
   }, [user, isAdmin, authLoading, roleLoading, navigate]);
 
   useEffect(() => {
-    if (isAdmin) fetchProfiles();
+    if (isAdmin) {
+      fetchProfiles();
+      fetchEmails();
+    }
   }, [isAdmin]);
 
   const fetchProfiles = async () => {
@@ -64,6 +68,19 @@ export default function Admin() {
     // so we'll use the profile data we have
     setProfiles((data as UserProfile[]) ?? []);
     setLoading(false);
+  };
+
+  const fetchEmails = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await supabase.functions.invoke("get-user-emails");
+      if (res.data?.emailMap) {
+        setEmailMap(res.data.emailMap);
+      }
+    } catch (e) {
+      console.error("Error fetching emails:", e);
+    }
   };
 
   const getTrialDaysLeft = (trialEndsAt: string) => {
@@ -182,7 +199,7 @@ export default function Admin() {
                         <TableCell>
                           <div>
                             <p className="font-medium">{profile.full_name || "Sin nombre"}</p>
-                            <p className="text-xs text-muted-foreground">{profile.user_id}</p>
+                            <p className="text-xs text-muted-foreground">{emailMap[profile.user_id] || profile.user_id}</p>
                           </div>
                         </TableCell>
                         <TableCell>{format(new Date(profile.created_at), "dd/MM/yyyy")}</TableCell>
