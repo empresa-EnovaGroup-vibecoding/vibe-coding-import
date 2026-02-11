@@ -29,7 +29,7 @@ interface TrialTenant {
  * - Negocios en trial que convierten pronto (próximos 3 días)
  * - Tabla de negocios activos con fecha de último pago
  */
-export function SuperAdminRevenue() {
+export default function SuperAdminRevenue() {
   // Query: Negocios activos
   const { data: activeTenants, isLoading: loadingActive } = useQuery({
     queryKey: ["super-admin", "revenue-active"],
