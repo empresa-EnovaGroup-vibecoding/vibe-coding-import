@@ -1,9 +1,8 @@
-# Environment variables sensibles (service_role, secrets)
+# Environment variables (NUNCA subir al repo)
+.env
 .env.local
 .env.production
 .env.staging
-# NOTA: .env contiene solo la anon/publishable key (publica por diseño)
-# Se commitea para que Lovable pueda hacer build correctamente
 
 # Logs
 logs

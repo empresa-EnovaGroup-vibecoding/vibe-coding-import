@@ -36,7 +36,7 @@ type StatusFilter = "all" | SubscriptionStatus;
  * - Tabla con acciones: Activar, Suspender, Impersonar
  * - Badge coloreado por estado
  */
-export default function SuperAdminTenants() {
+export function SuperAdminTenants() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");

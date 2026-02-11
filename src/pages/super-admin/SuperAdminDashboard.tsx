@@ -26,7 +26,7 @@ interface Tenant {
  * - Tabla con últimos 10 negocios registrados
  * - Badge coloreado por estado de suscripción
  */
-export default function SuperAdminDashboard() {
+export function SuperAdminDashboard() {
   const navigate = useNavigate();
 
   // Query: Total de negocios
