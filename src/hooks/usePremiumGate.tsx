@@ -1,52 +1,78 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./useAuth";
 
 /**
- * Hook to manage premium feature gating with membership modal
- * 
- * Usage:
- * const { showModal, openModal, closeModal, checkPremiumAccess } = usePremiumGate();
- * 
- * // To gate a feature:
- * const handlePremiumFeature = () => {
- *   if (!checkPremiumAccess()) return; // Will open modal if not premium
- *   // ... premium feature logic
- * };
+ * Hook to manage premium feature gating with membership modal.
+ * Checks the user's subscription_status from their profile.
  */
 export function usePremiumGate() {
+  const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const openModal = useCallback(() => {
-    setShowModal(true);
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setShowModal(false);
-  }, []);
-
-  /**
-   * Check if user has premium access
-   * Currently always returns false (no premium system implemented)
-   * Opens the membership modal if user doesn't have access
-   * 
-   * @returns true if user has premium access, false otherwise
-   */
-  const checkPremiumAccess = useCallback((): boolean => {
-    // TODO: Implement actual premium check logic
-    // For now, always show the modal (user doesn't have premium)
-    const hasPremium = false;
-    
-    if (!hasPremium) {
-      openModal();
-      return false;
+  useEffect(() => {
+    if (!user) {
+      setSubscriptionStatus(null);
+      setLoading(false);
+      return;
     }
-    
-    return true;
-  }, [openModal]);
+
+    const fetchStatus = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("subscription_status, trial_ends_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data) {
+        const status = (data as any).subscription_status as string;
+        const trialEnds = new Date((data as any).trial_ends_at as string);
+        if (status === "active") {
+          setSubscriptionStatus("active");
+        } else if (status === "trial" && trialEnds > new Date()) {
+          setSubscriptionStatus("trial");
+        } else {
+          setSubscriptionStatus("expired");
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchStatus();
+
+    // Listen for realtime changes to re-check status
+    const channel = supabase
+      .channel("profile-subscription")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` },
+        () => { fetchStatus(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  const openModal = useCallback(() => setShowModal(true), []);
+  const closeModal = useCallback(() => setShowModal(false), []);
+
+  const hasPremium = subscriptionStatus === "active" || subscriptionStatus === "trial";
+
+  const checkPremiumAccess = useCallback((): boolean => {
+    if (hasPremium) return true;
+    openModal();
+    return false;
+  }, [hasPremium, openModal]);
 
   return {
     showModal,
     openModal,
     closeModal,
     checkPremiumAccess,
+    hasPremium,
+    subscriptionStatus,
+    loading,
   };
 }

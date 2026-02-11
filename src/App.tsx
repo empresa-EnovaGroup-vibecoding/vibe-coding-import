@@ -21,6 +21,7 @@ import Packages from "./pages/Packages";
 import Team from "./pages/Team";
 import Cabins from "./pages/Cabins";
 import Membership from "./pages/Membership";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -157,6 +158,9 @@ const App = () => (
                 </RequireAuth>
               }
             />
+            <Route path="/admin" element={
+              <RequireAuth><Admin /></RequireAuth>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
