@@ -42,6 +42,9 @@ import {
   Search,
   Banknote,
   ArrowLeftRight,
+  Percent,
+  Tag,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -89,6 +92,8 @@ export default function POS() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"products" | "services">("products");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
+  const [discountType, setDiscountType] = useState<"percentage" | "fixed" | null>(null);
+  const [discountValue, setDiscountValue] = useState<string>("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -150,6 +155,9 @@ export default function POS() {
             notes: notes || null,
             tenant_id: tenantId,
             payment_method: paymentMethod,
+            discount_type: discountType,
+            discount_value: parseFloat(discountValue) || 0,
+            discount_amount: calculateDiscountAmount(),
           },
         ])
         .select()
@@ -201,6 +209,8 @@ export default function POS() {
       setSelectedClient("");
       setNotes("");
       setPaymentMethod("cash");
+      setDiscountType(null);
+      setDiscountValue("");
       toast.success("¡Venta registrada con éxito!");
     },
     onError: () => {
@@ -279,8 +289,22 @@ export default function POS() {
     setCart(cart.filter((_, i) => i !== index));
   };
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     return cart.reduce((sum, item) => sum + item.subtotal, 0);
+  };
+
+  const calculateDiscountAmount = () => {
+    const subtotal = calculateSubtotal();
+    const val = parseFloat(discountValue) || 0;
+    if (!discountType || val <= 0) return 0;
+    if (discountType === "percentage") {
+      return Math.min(subtotal, subtotal * (Math.min(val, 100) / 100));
+    }
+    return Math.min(subtotal, val);
+  };
+
+  const calculateTotal = () => {
+    return calculateSubtotal() - calculateDiscountAmount();
   };
 
   const handleFinalizeSale = () => {
@@ -535,6 +559,69 @@ export default function POS() {
               />
             </div>
 
+            {/* Discount */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                Descuento
+              </Label>
+              {!discountType ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setDiscountType("percentage")}
+                  >
+                    <Percent className="h-3.5 w-3.5" />
+                    Porcentaje
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setDiscountType("fixed")}
+                  >
+                    Q Monto fijo
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      max={discountType === "percentage" ? "100" : undefined}
+                      step="any"
+                      placeholder={discountType === "percentage" ? "Ej: 10" : "Ej: 50"}
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(e.target.value)}
+                      className="pr-10"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
+                      {discountType === "percentage" ? "%" : "Q"}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => { setDiscountType(null); setDiscountValue(""); }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              {calculateDiscountAmount() > 0 && (
+                <p className="text-xs text-green-600 font-medium">
+                  -Q{calculateDiscountAmount().toFixed(2)} de descuento
+                </p>
+              )}
+            </div>
+
             {/* Payment Method */}
             <div className="space-y-2">
               <Label>Metodo de Pago</Label>
@@ -582,6 +669,18 @@ export default function POS() {
             </div>
           </CardContent>
           <CardFooter className="flex-col gap-4 border-t pt-4">
+            {calculateDiscountAmount() > 0 && (
+              <div className="w-full space-y-1 text-sm">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Subtotal:</span>
+                  <span>Q{calculateSubtotal().toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-green-600">
+                  <span>Descuento ({discountType === "percentage" ? `${discountValue}%` : `Q${discountValue}`}):</span>
+                  <span>-Q{calculateDiscountAmount().toFixed(2)}</span>
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between w-full text-lg">
               <span className="font-semibold">Total:</span>
               <span className="font-bold text-primary text-2xl">
