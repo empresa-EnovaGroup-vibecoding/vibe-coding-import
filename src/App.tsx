@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { TenantProvider, useTenant } from "@/hooks/useTenant";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { RequireSuperAdmin } from "@/components/auth/RequireSuperAdmin";
+import { RequireOwner } from "@/components/auth/RequireOwner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SuperAdminLayout } from "@/components/super-admin/SuperAdminLayout";
 import Index from "./pages/Index";
@@ -216,9 +217,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <UserManagement />
-                      </MainLayout>
+                      <RequireOwner>
+                        <MainLayout>
+                          <UserManagement />
+                        </MainLayout>
+                      </RequireOwner>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -228,9 +231,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Packages />
-                      </MainLayout>
+                      <RequireOwner>
+                        <MainLayout>
+                          <Packages />
+                        </MainLayout>
+                      </RequireOwner>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -240,9 +245,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Team />
-                      </MainLayout>
+                      <RequireOwner>
+                        <MainLayout>
+                          <Team />
+                        </MainLayout>
+                      </RequireOwner>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -252,9 +259,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Cabins />
-                      </MainLayout>
+                      <RequireOwner>
+                        <MainLayout>
+                          <Cabins />
+                        </MainLayout>
+                      </RequireOwner>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -276,9 +285,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Settings />
-                      </MainLayout>
+                      <RequireOwner>
+                        <MainLayout>
+                          <Settings />
+                        </MainLayout>
+                      </RequireOwner>
                     </RequireTenant>
                   </RequireAuth>
                 }
