@@ -39,7 +39,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Scissors, Clock, Pencil, Trash2, FileUp, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Scissors, ChevronDown, ChevronRight, Clock, Pencil, Trash2, FileUp, Search } from "lucide-react";
 import ServicesImportModal from "@/components/services/ServicesImportModal";
 import { toast } from "sonner";
 
@@ -61,6 +62,7 @@ export default function Services() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -125,6 +127,13 @@ export default function Services() {
     }
     return groups;
   }, [filteredServices]);
+
+  // Auto-expand all categories when searching
+  useMemo(() => {
+    if (searchQuery.trim()) {
+      setExpandedCategories(new Set(Object.keys(groupedServices)));
+    }
+  }, [searchQuery, groupedServices]);
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -232,6 +241,18 @@ export default function Services() {
       setSelectedIds(new Set(filteredServices.map((s) => s.id)));
     }
   };
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  };
+
+  const expandAll = () => setExpandedCategories(new Set(Object.keys(groupedServices)));
+  const collapseAll = () => setExpandedCategories(new Set());
 
   const closeDialog = () => {
     setIsDialogOpen(false);
@@ -473,93 +494,117 @@ export default function Services() {
           No se encontraron servicios con ese filtro
         </div>
       ) : (
-        Object.entries(groupedServices).map(([category, categoryServices]) => (
-          <div key={category} className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="px-4 py-3 bg-muted/50 border-b border-border">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                {category}
-              </h2>
-              <p className="text-xs text-muted-foreground">{categoryServices.length} servicios</p>
+        <>
+          {/* Expand/Collapse controls + select all */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={filteredServices.length > 0 && selectedIds.size === filteredServices.length}
+                onCheckedChange={toggleSelectAll}
+              />
+              <span className="text-sm text-muted-foreground">Seleccionar todo</span>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
-                    <Checkbox
-                      checked={filteredServices.length > 0 && selectedIds.size === filteredServices.length}
-                      onCheckedChange={toggleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Servicio</TableHead>
-                  <TableHead>Duracion</TableHead>
-                  <TableHead>Precio</TableHead>
-                  <TableHead className="w-24">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categoryServices.map((service) => (
-                  <TableRow key={service.id} className={selectedIds.has(service.id) ? "bg-primary/5" : ""}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedIds.has(service.id)}
-                        onCheckedChange={() => toggleSelect(service.id)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                          <Scissors className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <span className="font-medium text-foreground">{service.name}</span>
-                          {service.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{service.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        {service.duration} min
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 font-medium text-foreground">
-                        Q{Number(service.price).toFixed(2)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(service)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        {isOwner && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => {
-                              if (confirm("¿Eliminar este servicio?")) {
-                                deleteMutation.mutate(service.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" onClick={expandAll} className="text-xs">
+                Expandir todo
+              </Button>
+              <Button variant="ghost" size="sm" onClick={collapseAll} className="text-xs">
+                Colapsar todo
+              </Button>
+            </div>
           </div>
-        ))
+
+          <div className="space-y-2">
+            {Object.entries(groupedServices).map(([category, categoryServices]) => {
+              const isExpanded = expandedCategories.has(category);
+              const selectedInCategory = categoryServices.filter((s) => selectedIds.has(s.id)).length;
+
+              return (
+                <div key={category} className="rounded-lg border border-border bg-card overflow-hidden">
+                  {/* Category header - clickable */}
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(category)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="font-semibold text-sm text-foreground tracking-wide">
+                        {category}
+                      </span>
+                      <Badge variant="secondary" className="text-xs font-normal">
+                        {categoryServices.length}
+                      </Badge>
+                      {selectedInCategory > 0 && (
+                        <Badge variant="default" className="text-xs font-normal">
+                          {selectedInCategory} sel.
+                        </Badge>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Services list - visible when expanded */}
+                  {isExpanded && (
+                    <div className="border-t border-border">
+                      {categoryServices.map((service, idx) => (
+                        <div
+                          key={service.id}
+                          className={`flex items-center gap-3 px-4 py-2.5 ${
+                            idx !== categoryServices.length - 1 ? "border-b border-border/50" : ""
+                          } ${selectedIds.has(service.id) ? "bg-primary/5" : "hover:bg-muted/20"} transition-colors`}
+                        >
+                          <Checkbox
+                            checked={selectedIds.has(service.id)}
+                            onCheckedChange={() => toggleSelect(service.id)}
+                          />
+                          {/* Name + description */}
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium text-foreground">{service.name}</span>
+                            {service.description && (
+                              <span className="text-xs text-muted-foreground ml-2">{service.description}</span>
+                            )}
+                          </div>
+                          {/* Duration */}
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {service.duration} min
+                          </span>
+                          {/* Price */}
+                          <span className="text-sm font-semibold text-foreground w-24 text-right">
+                            Q{Number(service.price).toFixed(2)}
+                          </span>
+                          {/* Actions */}
+                          <div className="flex items-center gap-0.5">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(service)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            {isOwner && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  if (confirm("¿Eliminar este servicio?")) {
+                                    deleteMutation.mutate(service.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
