@@ -47,8 +47,13 @@ export default function ImportPreviewStep({
   const parseNumericValue = (value: string | number | null | undefined): number => {
     if (value === null || value === undefined || value === "") return 0;
     if (typeof value === "number") return value;
-    // Remove currency symbols, spaces, and handle both comma and dot
-    const cleaned = value.toString().replace(/[Q$€\s]/gi, "").replace(/,/g, ".");
+    let cleaned = value.toString().replace(/[Q$€\s]/gi, "");
+    // Detect thousands separator: comma followed by exactly 3 digits (e.g. 1,200)
+    if (/^\d{1,3}(,\d{3})+$/.test(cleaned)) {
+      cleaned = cleaned.replace(/,/g, "");
+    } else {
+      cleaned = cleaned.replace(/,/g, ".");
+    }
     const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? 0 : parsed;
   };

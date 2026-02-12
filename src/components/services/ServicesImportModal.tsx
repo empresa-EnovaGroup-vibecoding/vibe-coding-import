@@ -69,14 +69,20 @@ export default function ServicesImportModal({
     };
 
     const aliases: Record<keyof ServiceColumnMapping, string[]> = {
-      name: ["nombre", "servicio", "service", "tratamiento", "descripcion", "name", "nombredelservicio"],
+      name: ["nombre", "servicio", "service", "tratamiento", "name", "nombredelservicio"],
       duration: ["duracion", "tiempo", "minutos", "minutes", "min", "duration", "time", "tiempomin"],
-      price: ["precio", "tarifa", "costo", "price", "rate", "valor", "precioq"],
+      price: ["precio", "tarifa", "price", "rate", "valor", "precioq"],
     };
+
+    // Words that disqualify a header from matching duration (e.g. "DETALLE / DURACION")
+    const durationExclude = ["detalle", "descripcion", "detail"];
 
     headers.forEach((header) => {
       const normalized = normalizeHeader(header);
       for (const [field, fieldAliases] of Object.entries(aliases)) {
+        if (field === "duration" && durationExclude.some((ex) => normalized.includes(ex))) {
+          continue;
+        }
         if (fieldAliases.some((alias) => normalized.includes(alias))) {
           if (!mapping[field as keyof ServiceColumnMapping]) {
             mapping[field as keyof ServiceColumnMapping] = header;
