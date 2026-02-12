@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, Upload, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
 import { type ParsedData, type ColumnMapping, FIELD_LABELS } from "./InventoryImportModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -41,6 +42,7 @@ export default function ImportPreviewStep({
   onImportSuccess,
 }: ImportPreviewStepProps) {
   const queryClient = useQueryClient();
+  const { tenantId } = useTenant();
 
   const parseNumericValue = (value: string | number | null | undefined): number => {
     if (value === null || value === undefined || value === "") return 0;
@@ -92,8 +94,11 @@ export default function ImportPreviewStep({
 
   const importMutation = useMutation({
     mutationFn: async (products: MappedProduct[]) => {
-      const productsToInsert = products.map(({ isValid, errors, ...product }) => product);
-      
+      const productsToInsert = products.map(({ isValid, errors, ...product }) => ({
+        ...product,
+        tenant_id: tenantId,
+      }));
+
       const { error } = await supabase.from("inventory").insert(productsToInsert);
       
       if (error) throw error;

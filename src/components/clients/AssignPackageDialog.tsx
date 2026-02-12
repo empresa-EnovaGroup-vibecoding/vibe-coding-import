@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
 
 const assignSchema = z.object({
   package_id: z.string().min(1, "Selecciona un paquete"),
@@ -48,6 +49,7 @@ export function AssignPackageDialog({
   clientId,
 }: AssignPackageDialogProps) {
   const queryClient = useQueryClient();
+  const { tenantId } = useTenant();
 
   const { data: packages } = useQuery({
     queryKey: ["packages", "active"],
@@ -86,6 +88,7 @@ export function AssignPackageDialog({
         sessions_used: 0,
         expires_at: expiresAt,
         notes: data.notes || null,
+        tenant_id: tenantId,
       });
 
       if (error) throw error;

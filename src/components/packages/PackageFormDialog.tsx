@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
 
 const packageSchema = z.object({
   name: z.string().min(1, "El nombre es requerido").max(100),
@@ -64,6 +65,7 @@ export function PackageFormDialog({
   editingPackage,
 }: PackageFormDialogProps) {
   const queryClient = useQueryClient();
+  const { tenantId } = useTenant();
 
   const { data: services } = useQuery({
     queryKey: ["services"],
@@ -124,6 +126,7 @@ export function PackageFormDialog({
         validity_days: data.validity_days || null,
         service_id: data.service_id === "none" ? null : data.service_id || null,
         is_active: data.is_active,
+        tenant_id: tenantId,
       };
 
       if (editingPackage) {

@@ -257,6 +257,7 @@ export default function Appointments() {
             appointment_id: appointment.id,
             service_id: serviceId,
             price_at_time: service?.price || 0,
+            tenant_id: tenantId,
           };
         });
 

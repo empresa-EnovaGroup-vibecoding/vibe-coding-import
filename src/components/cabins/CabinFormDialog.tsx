@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
 import type { Tables } from "@/integrations/supabase/types";
 
 const cabinSchema = z.object({
@@ -29,6 +30,7 @@ interface CabinFormDialogProps {
 
 export function CabinFormDialog({ open, onOpenChange, cabin }: CabinFormDialogProps) {
   const queryClient = useQueryClient();
+  const { tenantId } = useTenant();
   const isEditing = !!cabin;
 
   const form = useForm<CabinFormValues>({
@@ -62,6 +64,7 @@ export function CabinFormDialog({ open, onOpenChange, cabin }: CabinFormDialogPr
         name: values.name,
         description: values.description || null,
         is_active: values.is_active,
+        tenant_id: tenantId,
       };
 
       if (isEditing && cabin) {

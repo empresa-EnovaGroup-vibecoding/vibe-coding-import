@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
 import type { Tables } from "@/integrations/supabase/types";
 
 const teamMemberSchema = z.object({
@@ -30,6 +31,7 @@ interface TeamMemberFormDialogProps {
 
 export function TeamMemberFormDialog({ open, onOpenChange, member }: TeamMemberFormDialogProps) {
   const queryClient = useQueryClient();
+  const { tenantId } = useTenant();
   const isEditing = !!member;
 
   const form = useForm<TeamMemberFormValues>({
@@ -71,6 +73,7 @@ export function TeamMemberFormDialog({ open, onOpenChange, member }: TeamMemberF
         email: values.email || null,
         phone: values.phone || null,
         is_active: values.is_active,
+        tenant_id: tenantId,
       };
 
       if (isEditing && member) {

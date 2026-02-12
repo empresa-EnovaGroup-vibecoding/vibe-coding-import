@@ -22,6 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Save, Stethoscope, Sparkles, ClipboardList, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
 import { ProductRecommendationSelector } from "./ProductRecommendationSelector";
 
 const formSchema = z.object({
@@ -86,6 +87,7 @@ const cleaningFrequencyLabels: Record<string, string> = {
 export function FacialEvaluationForm({ clientId, onBack, onSuccess }: FacialEvaluationFormProps) {
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const queryClient = useQueryClient();
+  const { tenantId } = useTenant();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -139,6 +141,7 @@ export function FacialEvaluationForm({ clientId, onBack, onSuccess }: FacialEval
           skin_type: values.skin_type,
           skin_analysis: values.skin_analysis || null,
           treatment_performed: values.treatment_performed || null,
+          tenant_id: tenantId,
         }])
         .select()
         .single();
@@ -151,6 +154,7 @@ export function FacialEvaluationForm({ clientId, onBack, onSuccess }: FacialEval
           evaluation_id: evaluation.id,
           product_id: product.id,
           notes: product.notes || null,
+          tenant_id: tenantId,
         }));
 
         const { error: recError } = await supabase
