@@ -84,7 +84,7 @@ export default function GoogleSheetsTab({ onDataParsed }: GoogleSheetsTabProps) 
           onDataParsed({ headers, rows });
           setIsLoading(false);
         },
-        error: (err) => {
+        error: (err: Error) => {
           setError("Error al procesar los datos: " + err.message);
           setIsLoading(false);
         },

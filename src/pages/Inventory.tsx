@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { TablePagination, PAGE_SIZE } from "@/components/shared/TablePagination";
+import { logAudit } from "@/lib/audit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +41,7 @@ interface InventoryItem {
 export default function Inventory() {
   const { isOwner, tenantId } = useTenant();
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
@@ -53,25 +56,42 @@ export default function Inventory() {
   const queryClient = useQueryClient();
 
   // Use secure view that conditionally shows cost_price based on role
-  const { data: inventory, isLoading } = useQuery({
-    queryKey: ["inventory", tenantId],
+  const { data: inventoryData, isLoading } = useQuery({
+    queryKey: ["inventory", tenantId, page, searchQuery],
     queryFn: async () => {
-      if (!tenantId) return [];
-      const { data, error } = await supabase
+      if (!tenantId) return { items: [] as InventoryItem[], count: 0 };
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      let query = supabase
         .from("inventory_staff_view")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .order("name", { ascending: true });
+        .select("*", { count: "exact" })
+        .eq("tenant_id", tenantId);
+
+      if (searchQuery.trim()) {
+        query = query.or(
+          `name.ilike.%${searchQuery}%,sku.ilike.%${searchQuery}%,supplier.ilike.%${searchQuery}%`
+        );
+      }
+
+      const { data, error, count } = await query
+        .order("name", { ascending: true })
+        .range(from, to);
+
       if (error) throw error;
-      return data as InventoryItem[];
+      return { items: data as InventoryItem[], count: count ?? 0 };
     },
     enabled: !!tenantId,
+    placeholderData: keepPreviousData,
   });
+
+  const inventory = inventoryData?.items;
+  const totalCount = inventoryData?.count ?? 0;
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       if (!tenantId) throw new Error("No tenant ID");
-      const { error } = await supabase.from("inventory").insert([{
+      const { data: created, error } = await supabase.from("inventory").insert([{
         name: data.name,
         sku: data.sku || null,
         stock_level: parseInt(data.stock_level) || 0,
@@ -79,8 +99,9 @@ export default function Inventory() {
         sale_price: parseFloat(data.sale_price) || 0,
         supplier: data.supplier || null,
         tenant_id: tenantId,
-      }]);
+      }]).select("id").single();
       if (error) throw error;
+      await logAudit({ tenantId, action: "create", entityType: "inventory", entityId: created.id, details: { name: data.name } });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory", tenantId] });
@@ -109,6 +130,7 @@ export default function Inventory() {
         .eq("id", id)
         .eq("tenant_id", tenantId);
       if (error) throw error;
+      await logAudit({ tenantId, action: "update", entityType: "inventory", entityId: id, details: { name: data.name } });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory", tenantId] });
@@ -130,6 +152,7 @@ export default function Inventory() {
         .eq("id", id)
         .eq("tenant_id", tenantId);
       if (error) throw error;
+      await logAudit({ tenantId, action: "delete", entityType: "inventory", entityId: id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory", tenantId] });
@@ -180,12 +203,11 @@ export default function Inventory() {
     }
   };
 
-  const filteredInventory = inventory?.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.supplier?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Reset page when search changes
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    setPage(0);
+  };
 
   const isLowStock = (stockLevel: number) => stockLevel < 5;
 
@@ -311,7 +333,7 @@ export default function Inventory() {
         <Input
           placeholder="Buscar por nombre, SKU o proveedor..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
           className="pl-10"
         />
       </div>
@@ -320,7 +342,7 @@ export default function Inventory() {
       <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground">Cargando inventario...</div>
-        ) : !filteredInventory || filteredInventory.length === 0 ? (
+        ) : !inventory || inventory.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground">No hay productos registrados</p>
@@ -343,7 +365,7 @@ export default function Inventory() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInventory.map((item) => (
+                {inventory.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -414,6 +436,11 @@ export default function Inventory() {
             </Table>
           </div>
         )}
+        <TablePagination
+          page={page}
+          totalCount={totalCount}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

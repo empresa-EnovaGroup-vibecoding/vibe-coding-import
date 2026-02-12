@@ -268,8 +268,8 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
                 {client.phone && (
                   <div className="flex items-center gap-3 text-foreground">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <a 
-                      href={`https://wa.me/${client.phone.replace(/[\s\-\(\)]/g, "")}`}
+                    <a
+                      href={`https://wa.me/${client.phone.replace(/[\s()-]/g, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover:text-primary hover:underline"

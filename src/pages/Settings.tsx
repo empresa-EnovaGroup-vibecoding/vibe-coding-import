@@ -106,20 +106,27 @@ export default function Settings() {
   const removeLogo = async () => {
     if (!tenantId || !tenant?.logo_url) return;
 
-    const oldPath = tenant.logo_url.split("/tenant-logos/")[1];
-    if (oldPath) {
-      await supabase.storage.from("tenant-logos").remove([oldPath]);
+    try {
+      const oldPath = tenant.logo_url.split("/tenant-logos/")[1];
+      if (oldPath) {
+        await supabase.storage.from("tenant-logos").remove([oldPath]);
+      }
+
+      const { error } = await supabase
+        .from("tenants")
+        .update({ logo_url: null } as Record<string, unknown>)
+        .eq("id", tenantId);
+
+      if (error) throw error;
+
+      setLogoPreview(null);
+      setLogoFile(null);
+      await refetch();
+      toast.success("Logo eliminado");
+    } catch (err) {
+      console.error("Error removing logo:", err);
+      toast.error("Error al eliminar el logo");
     }
-
-    await supabase
-      .from("tenants")
-      .update({ logo_url: null } as Record<string, unknown>)
-      .eq("id", tenantId);
-
-    setLogoPreview(null);
-    setLogoFile(null);
-    await refetch();
-    toast.success("Logo eliminado");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

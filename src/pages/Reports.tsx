@@ -30,48 +30,68 @@ const COLORS = [
   "hsl(199, 89%, 48%)",
 ];
 
+interface MonthlyRevenueItem {
+  month: string;
+  fullMonth: string;
+  ventas: number;
+  servicios: number;
+  total: number;
+  gastos: number;
+  ganancia: number;
+}
+
 export default function Reports() {
   const { tenantId } = useTenant();
 
-  // Get monthly revenue for last 6 months
+  // Get monthly revenue for last 6 months (3 queries instead of 18)
   const { data: monthlyRevenue, isLoading: loadingRevenue } = useQuery({
     queryKey: ["monthlyRevenue", tenantId],
-    queryFn: async () => {
+    queryFn: async (): Promise<MonthlyRevenueItem[]> => {
       if (!tenantId) return [];
+      const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5)).toISOString();
+      const now = endOfMonth(new Date()).toISOString();
+
+      // 3 queries in parallel instead of 18 sequential
+      const [salesRes, appointmentsRes, expensesRes] = await Promise.all([
+        supabase
+          .from("sales")
+          .select("total_amount, created_at")
+          .eq("tenant_id", tenantId)
+          .gte("created_at", sixMonthsAgo)
+          .lte("created_at", now),
+        supabase
+          .from("appointments")
+          .select("total_price, start_time")
+          .eq("tenant_id", tenantId)
+          .eq("status", "completed")
+          .gte("start_time", sixMonthsAgo)
+          .lte("start_time", now),
+        supabase
+          .from("expenses")
+          .select("amount, expense_date")
+          .eq("tenant_id", tenantId)
+          .gte("expense_date", sixMonthsAgo.split("T")[0])
+          .lte("expense_date", now.split("T")[0]),
+      ]);
+
+      // Group by month in JS
       const months = [];
       for (let i = 5; i >= 0; i--) {
         const date = subMonths(new Date(), i);
-        const start = startOfMonth(date).toISOString();
-        const end = endOfMonth(date).toISOString();
+        const mStart = startOfMonth(date);
+        const mEnd = endOfMonth(date);
 
-        // Get sales revenue
-        const { data: sales } = await supabase
-          .from("sales")
-          .select("total_amount")
-          .eq("tenant_id", tenantId)
-          .gte("created_at", start)
-          .lte("created_at", end);
+        const salesTotal = salesRes.data
+          ?.filter(s => { const d = new Date(s.created_at); return d >= mStart && d <= mEnd; })
+          .reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
 
-        // Get appointments revenue
-        const { data: appointments } = await supabase
-          .from("appointments")
-          .select("total_price")
-          .eq("tenant_id", tenantId)
-          .eq("status", "completed")
-          .gte("start_time", start)
-          .lte("start_time", end);
+        const appointmentsTotal = appointmentsRes.data
+          ?.filter(a => { const d = new Date(a.start_time); return d >= mStart && d <= mEnd; })
+          .reduce((sum, a) => sum + Number(a.total_price), 0) || 0;
 
-        // Get expenses
-        const { data: expenses } = await supabase
-          .from("expenses")
-          .select("amount")
-          .eq("tenant_id", tenantId)
-          .gte("expense_date", start.split("T")[0])
-          .lte("expense_date", end.split("T")[0]);
-
-        const salesTotal = sales?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-        const appointmentsTotal = appointments?.reduce((sum, a) => sum + Number(a.total_price), 0) || 0;
-        const expensesTotal = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+        const expensesTotal = expensesRes.data
+          ?.filter(e => { const d = new Date(e.expense_date); return d >= mStart && d <= mEnd; })
+          .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
         months.push({
           month: format(date, "MMM", { locale: es }),
@@ -106,8 +126,9 @@ export default function Reports() {
 
       // Count services
       const serviceCounts: Record<string, { name: string; count: number }> = {};
-      data?.forEach((item: any) => {
-        const name = item.services?.name || "Desconocido";
+      data?.forEach((item: Record<string, unknown>) => {
+        const services = item.services as { name?: string } | null;
+        const name = services?.name || "Desconocido";
         if (!serviceCounts[name]) {
           serviceCounts[name] = { name, count: 0 };
         }
@@ -146,34 +167,36 @@ export default function Reports() {
         .eq("tenant_id", tenantId)
         .not("client_id", "is", null);
 
-      const clientStats: Record<string, { 
-        name: string; 
-        appointments: number; 
+      const clientStats: Record<string, {
+        name: string;
+        appointments: number;
         purchases: number;
         totalSpent: number;
       }> = {};
 
-      appointments?.forEach((apt: any) => {
-        const name = apt.clients?.name || "Desconocido";
-        const id = apt.client_id;
+      appointments?.forEach((apt: Record<string, unknown>) => {
+        const clients = apt.clients as { name?: string } | null;
+        const name = clients?.name || "Desconocido";
+        const id = apt.client_id as string;
         if (!clientStats[id]) {
           clientStats[id] = { name, appointments: 0, purchases: 0, totalSpent: 0 };
         }
         clientStats[id].appointments++;
       });
 
-      sales?.forEach((sale: any) => {
-        const id = sale.client_id;
+      sales?.forEach((sale: Record<string, unknown>) => {
+        const id = sale.client_id as string | null;
         if (id && clientStats[id]) {
           clientStats[id].purchases++;
           clientStats[id].totalSpent += Number(sale.total_amount);
         } else if (id) {
-          const name = sale.clients?.name || "Desconocido";
-          clientStats[id] = { 
-            name, 
-            appointments: 0, 
-            purchases: 1, 
-            totalSpent: Number(sale.total_amount) 
+          const clients = sale.clients as { name?: string } | null;
+          const name = clients?.name || "Desconocido";
+          clientStats[id] = {
+            name,
+            appointments: 0,
+            purchases: 1,
+            totalSpent: Number(sale.total_amount)
           };
         }
       });
@@ -185,7 +208,7 @@ export default function Reports() {
     enabled: !!tenantId,
   });
 
-  // Get summary stats
+  // Get summary stats (all queries in parallel)
   const { data: summaryStats } = useQuery({
     queryKey: ["summaryStats", tenantId],
     queryFn: async () => {
@@ -194,89 +217,47 @@ export default function Reports() {
       const lastMonth = startOfMonth(subMonths(new Date(), 1)).toISOString();
       const lastMonthEnd = endOfMonth(subMonths(new Date(), 1)).toISOString();
 
-      // This month sales
-      const { data: thisMonthSales } = await supabase
-        .from("sales")
-        .select("total_amount")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", thisMonth);
+      // All queries in parallel (8 queries simultaneous instead of sequential)
+      const [
+        thisMonthSalesRes,
+        thisMonthApptsRes,
+        lastMonthSalesRes,
+        lastMonthApptsRes,
+        clientsCountRes,
+        apptsCountRes,
+        expensesRes,
+        salesWithDetailsRes,
+      ] = await Promise.all([
+        supabase.from("sales").select("total_amount").eq("tenant_id", tenantId).gte("created_at", thisMonth),
+        supabase.from("appointments").select("total_price").eq("tenant_id", tenantId).eq("status", "completed").gte("start_time", thisMonth),
+        supabase.from("sales").select("total_amount").eq("tenant_id", tenantId).gte("created_at", lastMonth).lte("created_at", lastMonthEnd),
+        supabase.from("appointments").select("total_price").eq("tenant_id", tenantId).eq("status", "completed").gte("start_time", lastMonth).lte("start_time", lastMonthEnd),
+        supabase.from("clients").select("*", { count: "exact", head: true }).eq("tenant_id", tenantId),
+        supabase.from("appointments").select("*", { count: "exact", head: true }).eq("tenant_id", tenantId).gte("start_time", thisMonth),
+        supabase.from("expenses").select("amount").eq("tenant_id", tenantId).gte("expense_date", thisMonth.split("T")[0]),
+        supabase.from("sales").select("total_amount, discount_amount, payment_method").eq("tenant_id", tenantId).gte("created_at", thisMonth),
+      ]);
 
-      const { data: thisMonthAppointments } = await supabase
-        .from("appointments")
-        .select("total_price")
-        .eq("tenant_id", tenantId)
-        .eq("status", "completed")
-        .gte("start_time", thisMonth);
+      const thisMonthTotal =
+        (thisMonthSalesRes.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0) +
+        (thisMonthApptsRes.data?.reduce((sum, a) => sum + Number(a.total_price), 0) || 0);
 
-      // Last month for comparison
-      const { data: lastMonthSales } = await supabase
-        .from("sales")
-        .select("total_amount")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", lastMonth)
-        .lte("created_at", lastMonthEnd);
+      const lastMonthTotal =
+        (lastMonthSalesRes.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0) +
+        (lastMonthApptsRes.data?.reduce((sum, a) => sum + Number(a.total_price), 0) || 0);
 
-      const { data: lastMonthAppointments } = await supabase
-        .from("appointments")
-        .select("total_price")
-        .eq("tenant_id", tenantId)
-        .eq("status", "completed")
-        .gte("start_time", lastMonth)
-        .lte("start_time", lastMonthEnd);
-
-      const thisMonthTotal = 
-        (thisMonthSales?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0) +
-        (thisMonthAppointments?.reduce((sum, a) => sum + Number(a.total_price), 0) || 0);
-
-      const lastMonthTotal = 
-        (lastMonthSales?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0) +
-        (lastMonthAppointments?.reduce((sum, a) => sum + Number(a.total_price), 0) || 0);
-
-      const percentChange = lastMonthTotal > 0 
-        ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100 
+      const percentChange = lastMonthTotal > 0
+        ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
         : 0;
 
-      // Total clients
-      const { count: totalClients } = await supabase
-        .from("clients")
-        .select("*", { count: "exact", head: true })
-        .eq("tenant_id", tenantId);
+      const totalExpenses = expensesRes.data?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
-      // Total appointments this month
-      const { count: appointmentsThisMonth } = await supabase
-        .from("appointments")
-        .select("*", { count: "exact", head: true })
-        .eq("tenant_id", tenantId)
-        .gte("start_time", thisMonth);
-
-      // Expenses this month
-      const { data: expensesThisMonth } = await supabase
-        .from("expenses")
-        .select("amount")
-        .eq("tenant_id", tenantId)
-        .gte("expense_date", thisMonth.split("T")[0]);
-
-      const totalExpenses = expensesThisMonth?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
-
-      // Discounts this month
-      const { data: discountsThisMonth } = await supabase
-        .from("sales")
-        .select("discount_amount")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", thisMonth)
-        .gt("discount_amount", 0);
-
-      const totalDiscounts = discountsThisMonth?.reduce((sum, d) => sum + Number(d.discount_amount), 0) || 0;
-
-      // Payment method breakdown this month
-      const { data: salesByMethod } = await supabase
-        .from("sales")
-        .select("payment_method, total_amount")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", thisMonth);
+      const totalDiscounts = salesWithDetailsRes.data
+        ?.filter(d => Number(d.discount_amount) > 0)
+        .reduce((sum, d) => sum + Number(d.discount_amount), 0) || 0;
 
       const methodBreakdown: Record<string, number> = { cash: 0, card: 0, transfer: 0 };
-      salesByMethod?.forEach((s) => {
+      salesWithDetailsRes.data?.forEach((s) => {
         const method = s.payment_method || "cash";
         methodBreakdown[method] = (methodBreakdown[method] || 0) + Number(s.total_amount);
       });
@@ -285,8 +266,8 @@ export default function Reports() {
         thisMonthTotal,
         lastMonthTotal,
         percentChange,
-        totalClients: totalClients || 0,
-        appointmentsThisMonth: appointmentsThisMonth || 0,
+        totalClients: clientsCountRes.count || 0,
+        appointmentsThisMonth: apptsCountRes.count || 0,
         totalExpenses,
         totalDiscounts,
         methodBreakdown,

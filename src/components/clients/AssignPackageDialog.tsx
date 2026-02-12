@@ -155,9 +155,9 @@ export function AssignPackageDialog({
                 <p>
                   <strong>Precio:</strong> Q{Number(selectedPackage.price).toFixed(2)}
                 </p>
-                {(selectedPackage.services as any)?.name && (
+                {(selectedPackage.services as unknown as { name?: string } | null)?.name && (
                   <p>
-                    <strong>Servicio:</strong> {(selectedPackage.services as any).name}
+                    <strong>Servicio:</strong> {(selectedPackage.services as unknown as { name: string }).name}
                   </p>
                 )}
                 {selectedPackage.validity_days && (

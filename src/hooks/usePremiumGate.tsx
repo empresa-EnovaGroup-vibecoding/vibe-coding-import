@@ -27,8 +27,9 @@ export function usePremiumGate() {
         .maybeSingle();
 
       if (data) {
-        const status = (data as any).subscription_status as string;
-        const trialEnds = new Date((data as any).trial_ends_at as string);
+        const row = data as unknown as { subscription_status: string; trial_ends_at: string };
+        const status = row.subscription_status;
+        const trialEnds = new Date(row.trial_ends_at);
         if (status === "active") {
           setSubscriptionStatus("active");
         } else if (status === "trial" && trialEnds > new Date()) {

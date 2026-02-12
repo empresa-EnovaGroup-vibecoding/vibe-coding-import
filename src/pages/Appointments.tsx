@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logAudit } from "@/lib/audit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -271,6 +272,8 @@ export default function Appointments() {
 
         if (servicesError) throw servicesError;
       }
+
+      await logAudit({ tenantId, action: "create", entityType: "appointment", entityId: appointment.id, details: { client_id: data.client_id, date: data.date } });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments", undefined, tenantId] });
@@ -379,6 +382,7 @@ export default function Appointments() {
         .eq("id", id)
         .eq("tenant_id", tenantId);
       if (error) throw error;
+      await logAudit({ tenantId, action: "delete", entityType: "appointment", entityId: id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments", undefined, tenantId] });

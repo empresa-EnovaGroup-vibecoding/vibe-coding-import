@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,30 +12,41 @@ import { RequireOwner } from "@/components/auth/RequireOwner";
 import { RequireSubscription } from "@/components/auth/RequireSubscription";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SuperAdminLayout } from "@/components/super-admin/SuperAdminLayout";
+import { Loader2 } from "lucide-react";
+
+// Paginas criticas (carga inmediata)
 import Index from "./pages/Index";
-import Clients from "./pages/Clients";
-import Services from "./pages/Services";
-import Inventory from "./pages/Inventory";
-import Appointments from "./pages/Appointments";
-import POS from "./pages/POS";
-import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import UserManagement from "./pages/UserManagement";
-import Packages from "./pages/Packages";
-import Team from "./pages/Team";
-import Cabins from "./pages/Cabins";
-import Membership from "./pages/Membership";
-import Admin from "./pages/Admin";
-import Settings from "./pages/Settings";
-import Expenses from "./pages/Expenses";
-import Onboarding from "./pages/Onboarding";
-import AcceptInvite from "./pages/AcceptInvite";
-import PublicBooking from "./pages/PublicBooking";
-import { SuperAdminDashboard } from "./pages/super-admin/SuperAdminDashboard";
-import { SuperAdminTenants } from "./pages/super-admin/SuperAdminTenants";
-import { SuperAdminRevenue } from "./pages/super-admin/SuperAdminRevenue";
-import { SuperAdminTenantDetail } from "./pages/super-admin/SuperAdminTenantDetail";
+
+// Paginas lazy (se cargan cuando el usuario las visita)
+const Clients = lazy(() => import("./pages/Clients"));
+const Services = lazy(() => import("./pages/Services"));
+const Inventory = lazy(() => import("./pages/Inventory"));
+const Appointments = lazy(() => import("./pages/Appointments"));
+const POS = lazy(() => import("./pages/POS"));
+const Reports = lazy(() => import("./pages/Reports"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
+const Packages = lazy(() => import("./pages/Packages"));
+const Team = lazy(() => import("./pages/Team"));
+const Cabins = lazy(() => import("./pages/Cabins"));
+const Membership = lazy(() => import("./pages/Membership"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Expenses = lazy(() => import("./pages/Expenses"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
+const PublicBooking = lazy(() => import("./pages/PublicBooking"));
+const SuperAdminDashboard = lazy(() => import("./pages/super-admin/SuperAdminDashboard").then(m => ({ default: m.SuperAdminDashboard })));
+const SuperAdminTenants = lazy(() => import("./pages/super-admin/SuperAdminTenants").then(m => ({ default: m.SuperAdminTenants })));
+const SuperAdminRevenue = lazy(() => import("./pages/super-admin/SuperAdminRevenue").then(m => ({ default: m.SuperAdminRevenue })));
+const SuperAdminTenantDetail = lazy(() => import("./pages/super-admin/SuperAdminTenantDetail").then(m => ({ default: m.SuperAdminTenantDetail })));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -65,6 +77,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <TenantProvider>
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public routes */}
               <Route path="/auth" element={<Auth />} />
@@ -352,6 +365,7 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </TenantProvider>
         </AuthProvider>
       </BrowserRouter>

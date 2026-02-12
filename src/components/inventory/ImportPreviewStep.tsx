@@ -48,7 +48,7 @@ export default function ImportPreviewStep({
     if (value === null || value === undefined || value === "") return 0;
     if (typeof value === "number") return value;
     // Remove currency symbols, spaces, and handle both comma and dot
-    const cleaned = value.toString().replace(/[Q$€\s]/gi, "").replace(",", ".");
+    const cleaned = value.toString().replace(/[Q$€\s]/gi, "").replace(/,/g, ".");
     const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? 0 : parsed;
   };

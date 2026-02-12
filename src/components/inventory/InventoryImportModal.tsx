@@ -73,7 +73,7 @@ export default function InventoryImportModal({
 
   const autoMapColumns = (headers: string[]): ColumnMapping => {
     const normalizeHeader = (h: string) => h.toLowerCase().trim().replace(/[^a-z0-9áéíóúñ]/g, "");
-    
+
     const mapping: ColumnMapping = {
       name: null,
       sku: null,

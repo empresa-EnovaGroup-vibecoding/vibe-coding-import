@@ -82,9 +82,10 @@ export function RoleSetup() {
       );
       await refetch();
       navigate("/");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error assigning role:", err);
-      toast.error(err.message || "Error al asignar rol");
+      const errorMessage = err instanceof Error ? err.message : "Error al asignar rol";
+      toast.error(errorMessage);
     } finally {
       setIsAssigning(false);
     }

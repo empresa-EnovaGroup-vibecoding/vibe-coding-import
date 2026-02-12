@@ -83,14 +83,20 @@ export default function UserManagement() {
   };
 
   const fetchInvites = async () => {
-    if (!tenantId) return;
-    const { data } = await supabase
-      .from("tenant_invites")
-      .select("id, token, status, expires_at, created_at")
-      .eq("tenant_id", tenantId)
-      .eq("status", "pending")
-      .order("created_at", { ascending: false });
-    setInvites(data || []);
+    try {
+      if (!tenantId) return;
+      const { data, error } = await supabase
+        .from("tenant_invites")
+        .select("id, token, status, expires_at, created_at")
+        .eq("tenant_id", tenantId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setInvites(data || []);
+    } catch (error: unknown) {
+      console.error("Error fetching invites:", error);
+      toast.error("Error al cargar invitaciones");
+    }
   };
 
   const cancelInvite = async (inviteId: string) => {
@@ -122,9 +128,10 @@ export default function UserManagement() {
       const roleLabel = role === "owner" ? "Propietario" : role === "admin" ? "Administrador" : "Miembro";
       toast.success(`Rol actualizado a ${roleLabel}`);
       fetchMembers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error assigning role:", error);
-      toast.error(error.message || "Error al asignar rol");
+      const errorMessage = error instanceof Error ? error.message : "Error al asignar rol";
+      toast.error(errorMessage);
     } finally {
       setUpdating(null);
     }
@@ -145,9 +152,10 @@ export default function UserManagement() {
 
       toast.success("Miembro eliminado");
       fetchMembers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error removing member:", error);
-      toast.error(error.message || "Error al eliminar miembro");
+      const errorMessage = error instanceof Error ? error.message : "Error al eliminar miembro";
+      toast.error(errorMessage);
     } finally {
       setUpdating(null);
     }

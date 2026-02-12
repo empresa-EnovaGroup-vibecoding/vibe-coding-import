@@ -86,8 +86,7 @@ export function CabinFormDialog({ open, onOpenChange, cabin }: CabinFormDialogPr
       onOpenChange(false);
       form.reset();
     },
-    onError: (error) => {
-      console.error("Error saving cabin:", error);
+    onError: () => {
       toast.error("Error al guardar la cabina");
     },
   });

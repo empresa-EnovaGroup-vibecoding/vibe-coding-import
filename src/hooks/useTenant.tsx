@@ -82,8 +82,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
     try {
       // Verificar si es super_admin
-      const { data: superAdminData } = await supabase
+      const { data: superAdminData, error: saError } = await supabase
         .rpc("is_super_admin", { _user_id: user.id });
+      if (saError) console.error("Error checking super_admin:", saError);
       setIsSuperAdmin(superAdminData === true);
 
       // Obtener membresías del usuario (tenants a los que pertenece)
