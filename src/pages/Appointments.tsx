@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { WhatsAppButton } from "@/components/appointments/WhatsAppButton";
-import { Plus, Calendar as CalendarIcon, Clock, User, Trash2, AlertCircle, Users, DoorOpen, ImageIcon, Globe } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, Clock, User, Trash2, AlertCircle, Users, DoorOpen, ImageIcon, Globe, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, isSameDay, differenceInMinutes } from "date-fns";
 import { es } from "date-fns/locale";
@@ -46,6 +46,7 @@ interface Appointment {
   cabins: { name: string } | null;
   appointment_services: {
     id: string;
+    service_id: string;
     price_at_time: number;
     services: { name: string; duration: number } | null;
   }[];
@@ -88,6 +89,7 @@ export default function Appointments() {
   const { tenantId, isOwner } = useTenant();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     client_id: "",
     date: "",
@@ -125,6 +127,7 @@ export default function Appointments() {
           cabins (name),
           appointment_services (
             id,
+            service_id,
             price_at_time,
             services (name, duration)
           )
@@ -281,6 +284,72 @@ export default function Appointments() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      if (!tenantId) throw new Error("No tenant ID");
+      const startTime = new Date(`${data.date}T${data.time}`);
+
+      const selectedServicesList = services?.filter(s => data.selectedServices.includes(s.id)) || [];
+      const totalPrice = selectedServicesList.reduce((sum, s) => sum + Number(s.price), 0);
+      const totalDuration = selectedServicesList.reduce((sum, s) => sum + s.duration, 0);
+      const endTime = new Date(startTime.getTime() + totalDuration * 60000);
+
+      const { error: updateError } = await supabase
+        .from("appointments")
+        .update({
+          client_id: data.client_id,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          status: data.status as "pending" | "confirmed" | "completed" | "cancelled" | "in_room" | "no_show",
+          notes: data.notes || null,
+          total_price: totalPrice,
+          specialist_id: data.specialist_id || null,
+          cabin_id: data.cabin_id || null,
+        })
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
+
+      if (updateError) throw updateError;
+
+      // Replace appointment_services: delete old, insert new
+      const { error: deleteServicesError } = await supabase
+        .from("appointment_services")
+        .delete()
+        .eq("appointment_id", id)
+        .eq("tenant_id", tenantId);
+
+      if (deleteServicesError) throw deleteServicesError;
+
+      if (data.selectedServices.length > 0) {
+        const appointmentServices = data.selectedServices.map(serviceId => {
+          const service = services?.find(s => s.id === serviceId);
+          return {
+            appointment_id: id,
+            service_id: serviceId,
+            price_at_time: service?.price || 0,
+            tenant_id: tenantId,
+          };
+        });
+
+        const { error: insertServicesError } = await supabase
+          .from("appointment_services")
+          .insert(appointmentServices);
+
+        if (insertServicesError) throw insertServicesError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments", undefined, tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["todayAppointments", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["todayAppointmentsCount", tenantId] });
+      closeDialog();
+      toast.success("Cita actualizada exitosamente");
+    },
+    onError: () => {
+      toast.error("Error al actualizar la cita");
+    },
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       if (!tenantId) throw new Error("No tenant ID");
@@ -324,6 +393,7 @@ export default function Appointments() {
 
   const closeDialog = () => {
     setIsDialogOpen(false);
+    setEditingId(null);
     setFormData({
       client_id: "",
       date: "",
@@ -336,6 +406,22 @@ export default function Appointments() {
     });
   };
 
+  const openEdit = (appointment: Appointment) => {
+    const startDate = new Date(appointment.start_time);
+    setEditingId(appointment.id);
+    setFormData({
+      client_id: appointment.client_id,
+      date: format(startDate, "yyyy-MM-dd"),
+      time: format(startDate, "HH:mm"),
+      status: appointment.status,
+      notes: appointment.notes || "",
+      selectedServices: appointment.appointment_services.map(s => s.service_id),
+      specialist_id: appointment.specialist_id || "",
+      cabin_id: appointment.cabin_id || "",
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.client_id) {
@@ -346,7 +432,11 @@ export default function Appointments() {
       toast.error("Selecciona fecha y hora");
       return;
     }
-    createMutation.mutate(formData);
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
   };
 
   const toggleService = (serviceId: string) => {
@@ -388,6 +478,7 @@ export default function Appointments() {
         <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
           <DialogTrigger asChild>
             <Button className="gap-2" onClick={() => {
+              setEditingId(null);
               setFormData(prev => ({
                 ...prev,
                 date: format(selectedDate, "yyyy-MM-dd"),
@@ -400,7 +491,7 @@ export default function Appointments() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Crear Nueva Cita</DialogTitle>
+              <DialogTitle>{editingId ? "Editar Cita" : "Crear Nueva Cita"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -550,8 +641,8 @@ export default function Appointments() {
                 <Button type="button" variant="outline" onClick={closeDialog}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Guardando..." : "Guardar"}
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {(createMutation.isPending || updateMutation.isPending) ? "Guardando..." : editingId ? "Actualizar" : "Guardar"}
                 </Button>
               </div>
             </form>
@@ -669,6 +760,15 @@ export default function Appointments() {
                       </div>
                       
                       <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-primary"
+                          onClick={() => openEdit(appointment)}
+                          title="Editar cita"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <WhatsAppButton
                           phone={appointment.clients?.phone || null}
                           clientName={appointment.clients?.name || ""}
