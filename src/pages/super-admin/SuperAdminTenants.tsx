@@ -200,7 +200,14 @@ export function SuperAdminTenants() {
                   {filteredTenants && filteredTenants.length > 0 ? (
                     filteredTenants.map((tenant) => (
                       <TableRow key={tenant.id}>
-                        <TableCell className="font-medium">{tenant.name}</TableCell>
+                        <TableCell>
+                          <button
+                            className="font-medium text-left hover:underline hover:text-primary transition-colors"
+                            onClick={() => navigate(`/super-admin/tenants/${tenant.id}`)}
+                          >
+                            {tenant.name}
+                          </button>
+                        </TableCell>
                         <TableCell className="text-muted-foreground">
                           {tenant.slug}
                         </TableCell>

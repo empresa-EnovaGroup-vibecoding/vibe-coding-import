@@ -28,6 +28,7 @@ import Onboarding from "./pages/Onboarding";
 import { SuperAdminDashboard } from "./pages/super-admin/SuperAdminDashboard";
 import { SuperAdminTenants } from "./pages/super-admin/SuperAdminTenants";
 import { SuperAdminRevenue } from "./pages/super-admin/SuperAdminRevenue";
+import { SuperAdminTenantDetail } from "./pages/super-admin/SuperAdminTenantDetail";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,18 @@ const App = () => (
                     <RequireSuperAdmin>
                       <SuperAdminLayout>
                         <SuperAdminTenants />
+                      </SuperAdminLayout>
+                    </RequireSuperAdmin>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/super-admin/tenants/:tenantId"
+                element={
+                  <RequireAuth>
+                    <RequireSuperAdmin>
+                      <SuperAdminLayout>
+                        <SuperAdminTenantDetail />
                       </SuperAdminLayout>
                     </RequireSuperAdmin>
                   </RequireAuth>
