@@ -59,34 +59,22 @@ export default function UserManagement() {
     try {
       if (!tenantId) return;
 
-      // Fetch tenant members with profile info
-      const { data: tenantMembers, error: membersError } = await supabase
-        .from("tenant_members")
-        .select(`
-          id,
-          user_id,
-          role,
-          created_at,
-          profiles (
-            full_name
-          )
-        `)
-        .eq("tenant_id", tenantId);
+      const { data, error } = await supabase
+        .rpc("get_tenant_members", { _tenant_id: tenantId });
 
-      if (membersError) throw membersError;
+      if (error) throw error;
 
-      // Map to TenantMember format
-      const formattedMembers: TenantMember[] = (tenantMembers || []).map((member: any) => ({
-        id: member.id,
-        user_id: member.user_id,
-        email: member.user_id, // user_id serves as email identifier
-        full_name: member.profiles?.full_name || null,
-        role: member.role as TenantRole,
-        created_at: member.created_at,
+      const formattedMembers: TenantMember[] = (data || []).map((m: Record<string, unknown>) => ({
+        id: m.id as string,
+        user_id: m.user_id as string,
+        email: m.email as string,
+        full_name: (m.full_name as string) || null,
+        role: m.role as TenantRole,
+        created_at: m.created_at as string,
       }));
 
       setMembers(formattedMembers);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching members:", error);
       toast.error("Error al cargar miembros");
     } finally {
@@ -283,8 +271,8 @@ export default function UserManagement() {
                         <p className="font-medium">
                           {member.full_name || "Sin nombre"}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                          ID: {member.user_id.slice(0, 8)}...
+                        <p className="text-xs text-muted-foreground truncate max-w-[250px]">
+                          {member.email}
                         </p>
                       </div>
                     </TableCell>
