@@ -7,8 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, Users, UserCog, Trash2 } from "lucide-react";
+import { Loader2, Shield, Users, UserCog, Trash2, Clock, X } from "lucide-react";
 import { toast } from "sonner";
+import { InviteDialog } from "@/components/users/InviteDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ export default function UserManagement() {
   const { isOwner, tenantId, loading: roleLoading } = useTenant();
   const navigate = useNavigate();
   const [members, setMembers] = useState<TenantMember[]>([]);
+  const [invites, setInvites] = useState<Array<{ id: string; token: string; status: string; expires_at: string; created_at: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -49,6 +51,7 @@ export default function UserManagement() {
   useEffect(() => {
     if (isOwner && tenantId) {
       fetchMembers();
+      fetchInvites();
     }
   }, [isOwner, tenantId]);
 
@@ -88,6 +91,30 @@ export default function UserManagement() {
       toast.error("Error al cargar miembros");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInvites = async () => {
+    if (!tenantId) return;
+    const { data } = await supabase
+      .from("tenant_invites")
+      .select("id, token, status, expires_at, created_at")
+      .eq("tenant_id", tenantId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    setInvites(data || []);
+  };
+
+  const cancelInvite = async (inviteId: string) => {
+    const { error } = await supabase
+      .from("tenant_invites")
+      .delete()
+      .eq("id", inviteId);
+    if (error) {
+      toast.error("Error al cancelar invitacion");
+    } else {
+      toast.success("Invitacion cancelada");
+      fetchInvites();
     }
   };
 
@@ -181,14 +208,17 @@ export default function UserManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-          <UserCog className="h-8 w-8" />
-          Gestión de Usuarios
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Administra los roles y permisos de los usuarios del sistema
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+            <UserCog className="h-8 w-8" />
+            Gestion de Usuarios
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Administra los roles y permisos de los usuarios del sistema
+          </p>
+        </div>
+        <InviteDialog onInviteCreated={fetchInvites} />
       </div>
 
       {/* Stats Cards */}
@@ -340,6 +370,51 @@ export default function UserManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pending Invites */}
+      {invites.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Invitaciones Pendientes
+            </CardTitle>
+            <CardDescription>
+              Links activos esperando ser aceptados
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {invites.map((invite) => {
+                const isExpired = new Date(invite.expires_at) < new Date();
+                const link = `${window.location.origin}/invite/${invite.token}`;
+                return (
+                  <div key={invite.id} className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-mono truncate text-muted-foreground">{link}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {isExpired ? (
+                          <span className="text-destructive">Expirado</span>
+                        ) : (
+                          <>Expira: {new Date(invite.expires_at).toLocaleDateString("es-ES")}</>
+                        )}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive ml-2"
+                      onClick={() => cancelInvite(invite.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Permissions Info */}
       <Card>

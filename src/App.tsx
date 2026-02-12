@@ -26,6 +26,7 @@ import Membership from "./pages/Membership";
 import Admin from "./pages/Admin";
 import Settings from "./pages/Settings";
 import Onboarding from "./pages/Onboarding";
+import AcceptInvite from "./pages/AcceptInvite";
 import { SuperAdminDashboard } from "./pages/super-admin/SuperAdminDashboard";
 import { SuperAdminTenants } from "./pages/super-admin/SuperAdminTenants";
 import { SuperAdminRevenue } from "./pages/super-admin/SuperAdminRevenue";
@@ -63,6 +64,7 @@ const App = () => (
             <Routes>
               {/* Public routes */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/invite/:token" element={<AcceptInvite />} />
 
               {/* Onboarding - requires auth but NOT tenant */}
               <Route
