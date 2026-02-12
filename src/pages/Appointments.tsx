@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { WhatsAppButton } from "@/components/appointments/WhatsAppButton";
-import { Plus, Calendar as CalendarIcon, Clock, User, Trash2, AlertCircle, Users, DoorOpen } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, Clock, User, Trash2, AlertCircle, Users, DoorOpen, ImageIcon, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, isSameDay, differenceInMinutes } from "date-fns";
 import { es } from "date-fns/locale";
@@ -40,6 +40,7 @@ interface Appointment {
   total_price: number;
   specialist_id: string | null;
   cabin_id: string | null;
+  receipt_url: string | null;
   clients: { name: string; phone: string | null } | null;
   team_members: { name: string } | null;
   cabins: { name: string } | null;
@@ -723,7 +724,30 @@ export default function Appointments() {
                       </div>
                     )}
 
-                    {appointment.notes && (
+                    {/* Online booking indicator + receipt */}
+                    {(appointment.notes?.includes("Reserva online") || appointment.receipt_url) && (
+                      <div className="border-t border-border pt-2 mt-2 flex flex-wrap items-center gap-2">
+                        {appointment.notes?.includes("Reserva online") && (
+                          <Badge variant="outline" className="text-xs gap-1 bg-blue-50 text-blue-700 border-blue-200">
+                            <Globe className="h-3 w-3" />
+                            Reserva online
+                          </Badge>
+                        )}
+                        {appointment.receipt_url && (
+                          <a
+                            href={appointment.receipt_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium"
+                          >
+                            <ImageIcon className="h-3 w-3" />
+                            Ver comprobante
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {appointment.notes && !appointment.notes.includes("Reserva online") && (
                       <p className="text-sm text-muted-foreground mt-2 border-t border-border pt-2">
                         {appointment.notes}
                       </p>
