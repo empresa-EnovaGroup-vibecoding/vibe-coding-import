@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save, ClipboardList, Gift, Pencil } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save, ClipboardList, Gift, Pencil, DollarSign, TrendingUp, Scissors } from "lucide-react";
 import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -172,6 +172,63 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
       />
+
+      {/* Client Summary Stats */}
+      {(() => {
+        const completedAppointments = appointments?.filter(a => a.status === "completed") || [];
+        const totalAppointmentSpend = completedAppointments.reduce((sum, a) => sum + Number(a.total_price), 0);
+        const totalSalesSpend = sales?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
+        const totalSpent = totalAppointmentSpend + totalSalesSpend;
+        const totalVisits = completedAppointments.length;
+        const lastVisit = completedAppointments[0]?.start_time;
+
+        // Find most used service
+        const serviceCounts: Record<string, number> = {};
+        completedAppointments.forEach(a => {
+          a.appointment_services?.forEach((s: { services: { name: string } | null }) => {
+            const name = s.services?.name;
+            if (name) serviceCounts[name] = (serviceCounts[name] || 0) + 1;
+          });
+        });
+        const topService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0];
+
+        return (
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <DollarSign className="h-4 w-4" />
+                <span className="text-xs font-medium">Total Gastado</span>
+              </div>
+              <p className="text-xl font-bold text-foreground">Q{totalSpent.toFixed(2)}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <TrendingUp className="h-4 w-4" />
+                <span className="text-xs font-medium">Visitas</span>
+              </div>
+              <p className="text-xl font-bold text-foreground">{totalVisits}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <Calendar className="h-4 w-4" />
+                <span className="text-xs font-medium">Ultima Visita</span>
+              </div>
+              <p className="text-sm font-bold text-foreground">
+                {lastVisit ? formatDate(lastVisit, "d MMM yyyy") : "Sin visitas"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <Scissors className="h-4 w-4" />
+                <span className="text-xs font-medium">Servicio Favorito</span>
+              </div>
+              <p className="text-sm font-bold text-foreground truncate">
+                {topService ? `${topService[0]} (${topService[1]}x)` : "N/A"}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Main Tabs: General Data vs Clinical History */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
