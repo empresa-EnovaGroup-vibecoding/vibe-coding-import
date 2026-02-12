@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Building2, Loader2, Camera, Trash2, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { BusinessHoursCard } from "@/components/settings/BusinessHoursCard";
 
 const settingsSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(255),
@@ -326,6 +327,8 @@ export default function Settings() {
           </form>
         </CardContent>
       </Card>
+
+      <BusinessHoursCard />
     </div>
   );
 }

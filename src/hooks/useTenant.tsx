@@ -16,6 +16,7 @@ interface Tenant {
   trial_ends_at: string;
   plan_type: string;
   current_period_end: string | null;
+  business_hours: Record<string, { enabled: boolean; open: string; close: string }> | null;
 }
 
 interface TenantMembership {
@@ -93,7 +94,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           role,
           tenant:tenants (
             id, name, slug, phone, address, logo_url,
-            subscription_status, trial_ends_at, plan_type, current_period_end
+            subscription_status, trial_ends_at, plan_type, current_period_end,
+            business_hours
           )
         `)
         .eq("user_id", user.id);
