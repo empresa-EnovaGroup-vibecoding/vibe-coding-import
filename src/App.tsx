@@ -24,6 +24,7 @@ import Team from "./pages/Team";
 import Cabins from "./pages/Cabins";
 import Membership from "./pages/Membership";
 import Admin from "./pages/Admin";
+import Settings from "./pages/Settings";
 import Onboarding from "./pages/Onboarding";
 import { SuperAdminDashboard } from "./pages/super-admin/SuperAdminDashboard";
 import { SuperAdminTenants } from "./pages/super-admin/SuperAdminTenants";
@@ -263,6 +264,18 @@ const App = () => (
                     <RequireTenant>
                       <MainLayout>
                         <Membership />
+                      </MainLayout>
+                    </RequireTenant>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <RequireAuth>
+                    <RequireTenant>
+                      <MainLayout>
+                        <Settings />
                       </MainLayout>
                     </RequireTenant>
                   </RequireAuth>

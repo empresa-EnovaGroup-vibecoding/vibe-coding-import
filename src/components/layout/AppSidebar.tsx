@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Calendar, Scissors, Package, Menu, X, ShoppingCart, BarChart3, LogOut, UserCog, Gift, UserCheck, DoorOpen, Crown } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Scissors, Package, Menu, X, ShoppingCart, BarChart3, LogOut, UserCog, Gift, UserCheck, DoorOpen, Crown, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,12 @@ const navItems = [{
   icon: UserCog,
   adminOnly: true
 }, {
-  title: "Membresía Pro",
+  title: "Configuracion",
+  path: "/settings",
+  icon: Settings,
+  adminOnly: true
+}, {
+  title: "Membresia Pro",
   path: "/membership",
   icon: Crown,
   adminOnly: false

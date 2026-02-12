@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
@@ -32,8 +32,15 @@ function generateSlug(name: string): string {
 
 export default function Onboarding() {
   const { user } = useAuth();
-  const { refetch } = useTenant();
+  const { refetch, hasTenant } = useTenant();
   const navigate = useNavigate();
+
+  // Si ya tiene negocio, redirigir al dashboard
+  useEffect(() => {
+    if (hasTenant) {
+      navigate("/", { replace: true });
+    }
+  }, [hasTenant, navigate]);
 
   const [formData, setFormData] = useState({
     businessName: "",

@@ -58,7 +58,7 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 const ACTIVE_TENANT_KEY = "active_tenant_id";
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [memberships, setMemberships] = useState<TenantMembership[]>([]);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(
     () => localStorage.getItem(ACTIVE_TENANT_KEY)
@@ -68,6 +68,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const fetchTenantData = useCallback(async () => {
+    // Esperar a que auth termine de cargar antes de decidir
+    if (authLoading) return;
+
     if (!user) {
       setMemberships([]);
       setActiveTenantId(null);
@@ -131,7 +134,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [user, activeTenantId]);
+  }, [user, authLoading, activeTenantId]);
 
   useEffect(() => {
     fetchTenantData();
