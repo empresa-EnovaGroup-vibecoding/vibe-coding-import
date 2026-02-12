@@ -1,10 +1,17 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { TrialBanner } from "./TrialBanner";
+
+const ContentLoader = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -60,7 +67,9 @@ export function MainLayout({ children }: MainLayoutProps) {
       <AppSidebar />
       <main className="lg:pl-64">
         <div className="min-h-screen p-4 lg:p-8">
-          {children}
+          <Suspense fallback={<ContentLoader />}>
+            {children}
+          </Suspense>
         </div>
       </main>
     </div>
