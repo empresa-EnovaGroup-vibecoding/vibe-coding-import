@@ -93,18 +93,22 @@ export default function Services() {
     return cats.sort();
   }, [services]);
 
+  // Strip accents for search comparison
+  const normalize = (text: string) =>
+    text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
   // Filter services
   const filteredServices = useMemo(() => {
     if (!services) return [];
     return services.filter((s) => {
-      const q = searchQuery.trim().toLowerCase();
+      const q = normalize(searchQuery.trim());
       const matchesSearch = !q ||
-        s.name.toLowerCase().includes(q) ||
-        (s.description || "").toLowerCase().includes(q) ||
-        (s.category || "").toLowerCase().includes(q) ||
+        normalize(s.name).includes(q) ||
+        normalize(s.description || "").includes(q) ||
+        normalize(s.category || "").includes(q) ||
         s.duration.toString().includes(q) ||
         s.price.toString().includes(q) ||
-        `Q${Number(s.price).toFixed(2)}`.toLowerCase().includes(q);
+        `Q${Number(s.price).toFixed(2)}`.includes(q);
       const matchesCategory = filterCategory === "all" ||
         (filterCategory === "none" ? !s.category : s.category === filterCategory);
       return matchesSearch && matchesCategory;
