@@ -28,6 +28,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Scissors, Clock, Pencil, Trash2, FileUp, Search } from "lucide-react";
 import ServicesImportModal from "@/components/services/ServicesImportModal";
 import { toast } from "sonner";
@@ -48,6 +59,8 @@ export default function Services() {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -171,6 +184,45 @@ export default function Services() {
       toast.error(`Error al eliminar el servicio: ${error.message}`);
     },
   });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!tenantId) throw new Error("No tenant ID");
+      const { error } = await supabase
+        .from("services")
+        .delete()
+        .in("id", ids)
+        .eq("tenant_id", tenantId);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["services", tenantId] });
+      setSelectedIds(new Set());
+      setShowBulkDeleteDialog(false);
+      toast.success(`${count} servicios eliminados`);
+    },
+    onError: (error: Error) => {
+      toast.error(`Error al eliminar: ${error.message}`);
+    },
+  });
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredServices.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredServices.map((s) => s.id)));
+    }
+  };
 
   const closeDialog = () => {
     setIsDialogOpen(false);
@@ -347,6 +399,53 @@ export default function Services() {
         )}
       </div>
 
+      {/* Bulk actions bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+          <span className="text-sm font-medium">
+            {selectedIds.size} servicio{selectedIds.size > 1 ? "s" : ""} seleccionado{selectedIds.size > 1 ? "s" : ""}
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="gap-2"
+            onClick={() => setShowBulkDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Eliminar seleccionados
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Deseleccionar todo
+          </Button>
+        </div>
+      )}
+
+      {/* Bulk delete confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar {selectedIds.size} servicios</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta accion no se puede deshacer. Se eliminaran permanentemente los servicios seleccionados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Services grouped by category */}
       {isLoading ? (
         <div className="p-8 text-center text-muted-foreground">Cargando servicios...</div>
@@ -376,6 +475,12 @@ export default function Services() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={filteredServices.length > 0 && selectedIds.size === filteredServices.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Servicio</TableHead>
                   <TableHead>Duracion</TableHead>
                   <TableHead>Precio</TableHead>
@@ -384,7 +489,13 @@ export default function Services() {
               </TableHeader>
               <TableBody>
                 {categoryServices.map((service) => (
-                  <TableRow key={service.id}>
+                  <TableRow key={service.id} className={selectedIds.has(service.id) ? "bg-primary/5" : ""}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(service.id)}
+                        onCheckedChange={() => toggleSelect(service.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
