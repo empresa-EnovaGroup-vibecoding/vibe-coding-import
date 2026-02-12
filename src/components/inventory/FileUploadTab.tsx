@@ -2,7 +2,15 @@ import { useState, useCallback } from "react";
 import { Upload, FileSpreadsheet, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import type { ParsedData } from "./InventoryImportModal";
 
 interface FileUploadTabProps {
@@ -14,6 +22,9 @@ export default function FileUploadTab({ onDataParsed }: FileUploadTabProps) {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [sheetNames, setSheetNames] = useState<string[]>([]);
+  const [selectedSheet, setSelectedSheet] = useState<string | null>(null);
+  const [workbookRef, setWorkbookRef] = useState<XLSX.WorkBook | null>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -25,9 +36,51 @@ export default function FileUploadTab({ onDataParsed }: FileUploadTabProps) {
     setIsDragging(false);
   }, []);
 
+  const parseExcelSheet = useCallback(
+    (workbook: XLSX.WorkBook, sheetName: string) => {
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json<Record<string, string>>(worksheet, {
+        defval: "",
+        raw: false,
+      });
+
+      if (jsonData.length === 0) {
+        setError("La hoja seleccionada esta vacia.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const headers = Object.keys(jsonData[0]);
+      const rows = jsonData.map((row) => {
+        const stringRow: Record<string, string> = {};
+        for (const key of headers) {
+          stringRow[key] = String(row[key] ?? "");
+        }
+        return stringRow;
+      });
+
+      onDataParsed({ headers, rows });
+      setIsProcessing(false);
+      setWorkbookRef(null);
+      setSheetNames([]);
+      setSelectedSheet(null);
+    },
+    [onDataParsed]
+  );
+
+  const handleSheetSelect = useCallback(() => {
+    if (!workbookRef || !selectedSheet) return;
+    setIsProcessing(true);
+    setError(null);
+    parseExcelSheet(workbookRef, selectedSheet);
+  }, [workbookRef, selectedSheet, parseExcelSheet]);
+
   const processFile = useCallback(async (file: File) => {
     setIsProcessing(true);
     setError(null);
+    setSheetNames([]);
+    setSelectedSheet(null);
+    setWorkbookRef(null);
 
     const extension = file.name.split(".").pop()?.toLowerCase();
 
@@ -47,20 +100,39 @@ export default function FileUploadTab({ onDataParsed }: FileUploadTabProps) {
             onDataParsed({ headers, rows });
             setIsProcessing(false);
           },
-          error: (err) => {
+          error: (err: Error) => {
             setError("Error al procesar el archivo: " + err.message);
             setIsProcessing(false);
           },
         });
+      } else if (extension === "xlsx" || extension === "xls") {
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        const sheets = workbook.SheetNames;
+
+        if (sheets.length === 0) {
+          setError("El archivo Excel no contiene hojas.");
+          setIsProcessing(false);
+          return;
+        }
+
+        if (sheets.length === 1) {
+          parseExcelSheet(workbook, sheets[0]);
+        } else {
+          setSheetNames(sheets);
+          setSelectedSheet(sheets[0]);
+          setWorkbookRef(workbook);
+          setIsProcessing(false);
+        }
       } else {
-        setError("Formato de archivo no soportado. Usa archivos CSV.");
+        setError("Formato no soportado. Usa archivos CSV, XLSX o XLS.");
         setIsProcessing(false);
       }
     } catch {
       setError("Error al procesar el archivo");
       setIsProcessing(false);
     }
-  }, [onDataParsed]);
+  }, [onDataParsed, parseExcelSheet]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -84,6 +156,9 @@ export default function FileUploadTab({ onDataParsed }: FileUploadTabProps) {
   const clearFile = () => {
     setFile(null);
     setError(null);
+    setSheetNames([]);
+    setSelectedSheet(null);
+    setWorkbookRef(null);
   };
 
   return (
@@ -101,8 +176,8 @@ export default function FileUploadTab({ onDataParsed }: FileUploadTabProps) {
         onDrop={handleDrop}
         className={`
           relative border-2 border-dashed rounded-lg p-8 text-center transition-colors
-          ${isDragging 
-            ? "border-primary bg-primary/5" 
+          ${isDragging
+            ? "border-primary bg-primary/5"
             : "border-muted-foreground/25 hover:border-primary/50"
           }
         `}
@@ -129,23 +204,46 @@ export default function FileUploadTab({ onDataParsed }: FileUploadTabProps) {
           <>
             <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
             <p className="text-foreground font-medium mb-1">
-              Arrastra y suelta tu archivo aquí
+              Arrastra y suelta tu archivo aqui
             </p>
             <p className="text-sm text-muted-foreground mb-4">
               o haz clic para seleccionar
             </p>
             <input
               type="file"
-              accept=".csv"
+              accept=".csv,.xlsx,.xls"
               onChange={handleFileSelect}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
             <p className="text-xs text-muted-foreground">
-              Formato soportado: CSV
+              Formatos soportados: CSV, Excel (.xlsx, .xls)
             </p>
           </>
         )}
       </div>
+
+      {sheetNames.length > 1 && (
+        <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+          <p className="text-sm font-medium text-foreground">
+            Este archivo tiene {sheetNames.length} hojas. Selecciona cual importar:
+          </p>
+          <Select value={selectedSheet || ""} onValueChange={setSelectedSheet}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar hoja" />
+            </SelectTrigger>
+            <SelectContent>
+              {sheetNames.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleSheetSelect} className="w-full" disabled={!selectedSheet}>
+            Usar esta hoja
+          </Button>
+        </div>
+      )}
 
       {isProcessing && (
         <div className="flex items-center justify-center gap-2 text-muted-foreground">
