@@ -97,9 +97,14 @@ export default function Services() {
   const filteredServices = useMemo(() => {
     if (!services) return [];
     return services.filter((s) => {
-      const matchesSearch = !searchQuery.trim() ||
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (s.description || "").toLowerCase().includes(searchQuery.toLowerCase());
+      const q = searchQuery.trim().toLowerCase();
+      const matchesSearch = !q ||
+        s.name.toLowerCase().includes(q) ||
+        (s.description || "").toLowerCase().includes(q) ||
+        (s.category || "").toLowerCase().includes(q) ||
+        s.duration.toString().includes(q) ||
+        s.price.toString().includes(q) ||
+        `Q${Number(s.price).toFixed(2)}`.toLowerCase().includes(q);
       const matchesCategory = filterCategory === "all" ||
         (filterCategory === "none" ? !s.category : s.category === filterCategory);
       return matchesSearch && matchesCategory;
