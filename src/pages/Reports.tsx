@@ -16,7 +16,7 @@ import {
   Line,
   Legend,
 } from "recharts";
-import { TrendingUp, Users, Scissors, DollarSign, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, Scissors, DollarSign, Calendar, CreditCard, Banknote, ArrowLeftRight, Tag } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { useTenant } from "@/hooks/useTenant";
@@ -61,8 +61,17 @@ export default function Reports() {
           .gte("start_time", start)
           .lte("start_time", end);
 
+        // Get expenses
+        const { data: expenses } = await supabase
+          .from("expenses")
+          .select("amount")
+          .eq("tenant_id", tenantId)
+          .gte("expense_date", start.split("T")[0])
+          .lte("expense_date", end.split("T")[0]);
+
         const salesTotal = sales?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
         const appointmentsTotal = appointments?.reduce((sum, a) => sum + Number(a.total_price), 0) || 0;
+        const expensesTotal = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
         months.push({
           month: format(date, "MMM", { locale: es }),
@@ -70,6 +79,8 @@ export default function Reports() {
           ventas: salesTotal,
           servicios: appointmentsTotal,
           total: salesTotal + appointmentsTotal,
+          gastos: expensesTotal,
+          ganancia: salesTotal + appointmentsTotal - expensesTotal,
         });
       }
       return months;
@@ -238,12 +249,47 @@ export default function Reports() {
         .eq("tenant_id", tenantId)
         .gte("start_time", thisMonth);
 
+      // Expenses this month
+      const { data: expensesThisMonth } = await supabase
+        .from("expenses")
+        .select("amount")
+        .eq("tenant_id", tenantId)
+        .gte("expense_date", thisMonth.split("T")[0]);
+
+      const totalExpenses = expensesThisMonth?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+
+      // Discounts this month
+      const { data: discountsThisMonth } = await supabase
+        .from("sales")
+        .select("discount_amount")
+        .eq("tenant_id", tenantId)
+        .gte("created_at", thisMonth)
+        .gt("discount_amount", 0);
+
+      const totalDiscounts = discountsThisMonth?.reduce((sum, d) => sum + Number(d.discount_amount), 0) || 0;
+
+      // Payment method breakdown this month
+      const { data: salesByMethod } = await supabase
+        .from("sales")
+        .select("payment_method, total_amount")
+        .eq("tenant_id", tenantId)
+        .gte("created_at", thisMonth);
+
+      const methodBreakdown: Record<string, number> = { cash: 0, card: 0, transfer: 0 };
+      salesByMethod?.forEach((s) => {
+        const method = s.payment_method || "cash";
+        methodBreakdown[method] = (methodBreakdown[method] || 0) + Number(s.total_amount);
+      });
+
       return {
         thisMonthTotal,
         lastMonthTotal,
         percentChange,
         totalClients: totalClients || 0,
         appointmentsThisMonth: appointmentsThisMonth || 0,
+        totalExpenses,
+        totalDiscounts,
+        methodBreakdown,
       };
     },
     enabled: !!tenantId,
@@ -259,7 +305,7 @@ export default function Reports() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ingresos del Mes</CardTitle>
@@ -280,12 +326,46 @@ export default function Reports() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total 6 Meses</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Gastos del Mes</CardTitle>
+            <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Q{totalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Ingresos acumulados</p>
+            <div className="text-2xl font-bold text-red-600">Q{summaryStats?.totalExpenses.toFixed(2) || "0.00"}</div>
+            <p className="text-xs text-muted-foreground">Alquiler, insumos, nomina...</p>
+          </CardContent>
+        </Card>
+
+        <Card className={(summaryStats?.thisMonthTotal ?? 0) - (summaryStats?.totalExpenses ?? 0) >= 0 ? "border-green-200" : "border-red-200"}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ganancia Neta</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const profit = (summaryStats?.thisMonthTotal ?? 0) - (summaryStats?.totalExpenses ?? 0);
+              return (
+                <>
+                  <div className={`text-2xl font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    Q{profit.toFixed(2)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Ingresos - Gastos</p>
+                </>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary stats */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Descuentos Otorgados</CardTitle>
+            <Tag className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">Q{summaryStats?.totalDiscounts.toFixed(2) || "0.00"}</div>
+            <p className="text-xs text-muted-foreground">Este mes</p>
           </CardContent>
         </Card>
 
@@ -313,9 +393,9 @@ export default function Reports() {
       </div>
 
       {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Monthly Revenue Chart */}
-        <Card className="col-span-full">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
@@ -368,10 +448,19 @@ export default function Reports() {
                   <Line
                     type="monotone"
                     dataKey="total"
-                    name="Total"
+                    name="Total Ingresos"
                     stroke="hsl(38, 92%, 50%)"
                     strokeWidth={3}
                     dot={{ fill: "hsl(38, 92%, 50%)" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="gastos"
+                    name="Gastos"
+                    stroke="hsl(0, 84%, 60%)"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={{ fill: "hsl(0, 84%, 60%)" }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -422,6 +511,63 @@ export default function Reports() {
                 </PieChart>
               </ResponsiveContainer>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Payment Method Breakdown */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Ventas por Metodo de Pago
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!summaryStats?.methodBreakdown ? (
+              <div className="h-64 bg-muted animate-pulse rounded-lg" />
+            ) : (() => {
+              const METHOD_LABELS: Record<string, string> = { cash: "Efectivo", card: "Tarjeta", transfer: "Transferencia" };
+              const METHOD_COLORS = ["hsl(142, 71%, 45%)", "hsl(221, 83%, 53%)", "hsl(262, 83%, 58%)"];
+              const data = Object.entries(summaryStats.methodBreakdown)
+                .filter(([, value]) => value > 0)
+                .map(([key, value]) => ({ name: METHOD_LABELS[key] || key, value }));
+
+              if (data.length === 0) {
+                return (
+                  <div className="h-64 flex items-center justify-center text-muted-foreground">
+                    No hay ventas este mes
+                  </div>
+                );
+              }
+
+              return (
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={data}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      outerRadius={80}
+                      dataKey="value"
+                    >
+                      {data.map((_, index) => (
+                        <Cell key={`method-${index}`} fill={METHOD_COLORS[index % METHOD_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number) => [`Q${value.toFixed(2)}`, "Monto"]}
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              );
+            })()}
           </CardContent>
         </Card>
 
