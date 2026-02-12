@@ -21,14 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -40,7 +32,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Scissors, ChevronDown, ChevronRight, Clock, Pencil, Trash2, FileUp, Search } from "lucide-react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Plus, Scissors, Pencil, Trash2, FileUp, Search, Clock } from "lucide-react";
 import ServicesImportModal from "@/components/services/ServicesImportModal";
 import { toast } from "sonner";
 
@@ -62,7 +55,6 @@ export default function Services() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -127,13 +119,6 @@ export default function Services() {
     }
     return groups;
   }, [filteredServices]);
-
-  // Auto-expand all categories when searching
-  useMemo(() => {
-    if (searchQuery.trim()) {
-      setExpandedCategories(new Set(Object.keys(groupedServices)));
-    }
-  }, [searchQuery, groupedServices]);
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -241,18 +226,6 @@ export default function Services() {
       setSelectedIds(new Set(filteredServices.map((s) => s.id)));
     }
   };
-
-  const toggleCategory = (category: string) => {
-    setExpandedCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
-      return next;
-    });
-  };
-
-  const expandAll = () => setExpandedCategories(new Set(Object.keys(groupedServices)));
-  const collapseAll = () => setExpandedCategories(new Set());
 
   const closeDialog = () => {
     setIsDialogOpen(false);
@@ -402,32 +375,65 @@ export default function Services() {
         />
       </div>
 
-      {/* Search & Filter */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar servicio..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        {categories.length > 0 && (
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las categorias</SelectItem>
-              <SelectItem value="none">Sin categoria</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por nombre, categoria, precio..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
+
+      {/* Category pills */}
+      {categories.length > 0 && (
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex gap-2 pb-2">
+            <button
+              type="button"
+              onClick={() => setFilterCategory("all")}
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                filterCategory === "all"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Todos
+            </button>
+            {categories.map((cat) => {
+              const count = services?.filter((s) => s.category === cat).length ?? 0;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setFilterCategory(filterCategory === cat ? "all" : cat)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                    filterCategory === cat
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {cat}
+                  <span className="text-xs opacity-70">{count}</span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setFilterCategory(filterCategory === "none" ? "all" : "none")}
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                filterCategory === "none"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Sin categoria
+            </button>
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      )}
 
       {/* Bulk actions bar */}
       {selectedIds.size > 0 && (
@@ -476,7 +482,7 @@ export default function Services() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Services grouped by category */}
+      {/* Services */}
       {isLoading ? (
         <div className="p-8 text-center text-muted-foreground">Cargando servicios...</div>
       ) : !services || services.length === 0 ? (
@@ -494,117 +500,95 @@ export default function Services() {
           No se encontraron servicios con ese filtro
         </div>
       ) : (
-        <>
-          {/* Expand/Collapse controls + select all */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={filteredServices.length > 0 && selectedIds.size === filteredServices.length}
-                onCheckedChange={toggleSelectAll}
-              />
-              <span className="text-sm text-muted-foreground">Seleccionar todo</span>
-            </div>
-            <div className="flex gap-1">
-              <Button variant="ghost" size="sm" onClick={expandAll} className="text-xs">
-                Expandir todo
-              </Button>
-              <Button variant="ghost" size="sm" onClick={collapseAll} className="text-xs">
-                Colapsar todo
-              </Button>
-            </div>
+        <div className="space-y-1">
+          {/* Select all */}
+          <div className="flex items-center gap-2 px-1 pb-2">
+            <Checkbox
+              checked={filteredServices.length > 0 && selectedIds.size === filteredServices.length}
+              onCheckedChange={toggleSelectAll}
+            />
+            <span className="text-xs text-muted-foreground">
+              Seleccionar todo ({filteredServices.length})
+            </span>
           </div>
 
-          <div className="space-y-2">
-            {Object.entries(groupedServices).map(([category, categoryServices]) => {
-              const isExpanded = expandedCategories.has(category);
-              const selectedInCategory = categoryServices.filter((s) => selectedIds.has(s.id)).length;
+          {Object.entries(groupedServices).map(([category, categoryServices]) => (
+            <div key={category} className="mb-6">
+              {/* Category divider */}
+              <div className="flex items-center gap-3 mb-2 px-1">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                  {category}
+                </h3>
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground">{categoryServices.length}</span>
+              </div>
 
-              return (
-                <div key={category} className="rounded-lg border border-border bg-card overflow-hidden">
-                  {/* Category header - clickable */}
-                  <button
-                    type="button"
-                    onClick={() => toggleCategory(category)}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+              {/* Service rows */}
+              <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border/50">
+                {categoryServices.map((service) => (
+                  <div
+                    key={service.id}
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                      selectedIds.has(service.id) ? "bg-primary/5" : "hover:bg-muted/30"
+                    }`}
                   >
-                    <div className="flex items-center gap-3">
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      <span className="font-semibold text-sm text-foreground tracking-wide">
-                        {category}
-                      </span>
-                      <Badge variant="secondary" className="text-xs font-normal">
-                        {categoryServices.length}
-                      </Badge>
-                      {selectedInCategory > 0 && (
-                        <Badge variant="default" className="text-xs font-normal">
-                          {selectedInCategory} sel.
-                        </Badge>
+                    <Checkbox
+                      checked={selectedIds.has(service.id)}
+                      onCheckedChange={() => toggleSelect(service.id)}
+                    />
+                    {/* Name ............ Price */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-medium text-foreground truncate">
+                          {service.name}
+                        </span>
+                        <span className="flex-1 border-b border-dotted border-muted-foreground/20 min-w-4" />
+                        <span className="text-sm font-semibold text-foreground whitespace-nowrap">
+                          Q{Number(service.price).toFixed(2)}
+                        </span>
+                      </div>
+                      {service.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {service.description}
+                        </p>
                       )}
                     </div>
-                  </button>
-
-                  {/* Services list - visible when expanded */}
-                  {isExpanded && (
-                    <div className="border-t border-border">
-                      {categoryServices.map((service, idx) => (
-                        <div
-                          key={service.id}
-                          className={`flex items-center gap-3 px-4 py-2.5 ${
-                            idx !== categoryServices.length - 1 ? "border-b border-border/50" : ""
-                          } ${selectedIds.has(service.id) ? "bg-primary/5" : "hover:bg-muted/20"} transition-colors`}
+                    {/* Duration badge */}
+                    <Badge variant="outline" className="text-[10px] font-normal gap-1 shrink-0 hidden sm:inline-flex">
+                      <Clock className="h-3 w-3" />
+                      {service.duration} min
+                    </Badge>
+                    {/* Actions */}
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => openEditDialog(service)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      {isOwner && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            if (confirm("¿Eliminar este servicio?")) {
+                              deleteMutation.mutate(service.id);
+                            }
+                          }}
                         >
-                          <Checkbox
-                            checked={selectedIds.has(service.id)}
-                            onCheckedChange={() => toggleSelect(service.id)}
-                          />
-                          {/* Name + description */}
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-foreground">{service.name}</span>
-                            {service.description && (
-                              <span className="text-xs text-muted-foreground ml-2">{service.description}</span>
-                            )}
-                          </div>
-                          {/* Duration */}
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {service.duration} min
-                          </span>
-                          {/* Price */}
-                          <span className="text-sm font-semibold text-foreground w-24 text-right">
-                            Q{Number(service.price).toFixed(2)}
-                          </span>
-                          {/* Actions */}
-                          <div className="flex items-center gap-0.5">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(service)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            {isOwner && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-destructive hover:text-destructive"
-                                onClick={() => {
-                                  if (confirm("¿Eliminar este servicio?")) {
-                                    deleteMutation.mutate(service.id);
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
