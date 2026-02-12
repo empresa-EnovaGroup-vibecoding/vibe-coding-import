@@ -84,7 +84,7 @@ const statusConfig = {
 };
 
 export default function Appointments() {
-  const { tenantId } = useTenant();
+  const { tenantId, isOwner } = useTenant();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -691,18 +691,20 @@ export default function Appointments() {
                             <SelectItem value="cancelled">Cancelada</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => {
-                            if (confirm("¿Eliminar esta cita?")) {
-                              deleteMutation.mutate(appointment.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isOwner && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (confirm("¿Eliminar esta cita?")) {
+                                deleteMutation.mutate(appointment.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
 
