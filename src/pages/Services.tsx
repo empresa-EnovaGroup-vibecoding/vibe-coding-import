@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
@@ -14,6 +14,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -21,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Scissors, Clock, Pencil, Trash2, FileUp } from "lucide-react";
+import { Plus, Scissors, Clock, Pencil, Trash2, FileUp, Search } from "lucide-react";
 import ServicesImportModal from "@/components/services/ServicesImportModal";
 import { toast } from "sonner";
 
@@ -29,6 +36,7 @@ interface Service {
   id: string;
   name: string;
   description: string | null;
+  category: string | null;
   duration: number;
   price: number;
 }
@@ -38,9 +46,12 @@ export default function Services() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    category: "",
     duration: "30",
     price: "",
   });
@@ -54,6 +65,7 @@ export default function Services() {
         .from("services")
         .select("*")
         .eq("tenant_id", tenantId)
+        .order("category", { ascending: true, nullsFirst: false })
         .order("name", { ascending: true });
       if (error) throw error;
       return data as Service[];
@@ -61,12 +73,44 @@ export default function Services() {
     enabled: !!tenantId,
   });
 
+  // Get unique categories for filter
+  const categories = useMemo(() => {
+    if (!services) return [];
+    const cats = [...new Set(services.map((s) => s.category).filter(Boolean))] as string[];
+    return cats.sort();
+  }, [services]);
+
+  // Filter services
+  const filteredServices = useMemo(() => {
+    if (!services) return [];
+    return services.filter((s) => {
+      const matchesSearch = !searchQuery.trim() ||
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (s.description || "").toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = filterCategory === "all" ||
+        (filterCategory === "none" ? !s.category : s.category === filterCategory);
+      return matchesSearch && matchesCategory;
+    });
+  }, [services, searchQuery, filterCategory]);
+
+  // Group by category
+  const groupedServices = useMemo(() => {
+    const groups: Record<string, Service[]> = {};
+    for (const service of filteredServices) {
+      const key = service.category || "Sin categoria";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(service);
+    }
+    return groups;
+  }, [filteredServices]);
+
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase.from("services").insert([{
         name: data.name,
         description: data.description || null,
+        category: data.category || null,
         duration: parseInt(data.duration),
         price: parseFloat(data.price) || 0,
         tenant_id: tenantId,
@@ -91,6 +135,7 @@ export default function Services() {
         .update({
           name: data.name,
           description: data.description || null,
+          category: data.category || null,
           duration: parseInt(data.duration),
           price: parseFloat(data.price) || 0,
         })
@@ -130,7 +175,7 @@ export default function Services() {
   const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingService(null);
-    setFormData({ name: "", description: "", duration: "30", price: "" });
+    setFormData({ name: "", description: "", category: "", duration: "30", price: "" });
   };
 
   const openEditDialog = (service: Service) => {
@@ -138,6 +183,7 @@ export default function Services() {
     setFormData({
       name: service.name,
       description: service.description || "",
+      category: service.category || "",
       duration: service.duration.toString(),
       price: service.price.toString(),
     });
@@ -162,7 +208,12 @@ export default function Services() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Servicios</h1>
-          <p className="text-muted-foreground mt-1">Catálogo de servicios disponibles</p>
+          <p className="text-muted-foreground mt-1">
+            Catalogo de servicios disponibles
+            {services && services.length > 0 && (
+              <span className="ml-1">({services.length} servicios)</span>
+            )}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -206,9 +257,26 @@ export default function Services() {
                   rows={2}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoria</Label>
+                <Input
+                  id="category"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  placeholder="Ej: FACIALES, MASAJES, etc."
+                  list="category-suggestions"
+                />
+                {categories.length > 0 && (
+                  <datalist id="category-suggestions">
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat} />
+                    ))}
+                  </datalist>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="duration">Duración (min)</Label>
+                  <Label htmlFor="duration">Duracion (min)</Label>
                   <Input
                     id="duration"
                     type="number"
@@ -252,11 +320,38 @@ export default function Services() {
         />
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground">Cargando servicios...</div>
-        ) : !services || services.length === 0 ? (
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar servicio..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        {categories.length > 0 && (
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrar por categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las categorias</SelectItem>
+              <SelectItem value="none">Sin categoria</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      {/* Services grouped by category */}
+      {isLoading ? (
+        <div className="p-8 text-center text-muted-foreground">Cargando servicios...</div>
+      ) : !services || services.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Scissors className="h-12 w-12 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground">No hay servicios registrados</p>
@@ -264,74 +359,88 @@ export default function Services() {
               Crear primer servicio
             </Button>
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>Servicio</TableHead>
-                <TableHead>Duración</TableHead>
-                <TableHead>Precio</TableHead>
-                <TableHead className="w-24">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {services.map((service) => (
-                <TableRow key={service.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                        <Scissors className="h-5 w-5 text-primary" />
+        </div>
+      ) : filteredServices.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card shadow-sm p-8 text-center text-muted-foreground">
+          No se encontraron servicios con ese filtro
+        </div>
+      ) : (
+        Object.entries(groupedServices).map(([category, categoryServices]) => (
+          <div key={category} className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="px-4 py-3 bg-muted/50 border-b border-border">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                {category}
+              </h2>
+              <p className="text-xs text-muted-foreground">{categoryServices.length} servicios</p>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Servicio</TableHead>
+                  <TableHead>Duracion</TableHead>
+                  <TableHead>Precio</TableHead>
+                  <TableHead className="w-24">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {categoryServices.map((service) => (
+                  <TableRow key={service.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                          <Scissors className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <span className="font-medium text-foreground">{service.name}</span>
+                          {service.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{service.description}</p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-medium text-foreground">{service.name}</span>
-                        {service.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{service.description}</p>
-                        )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        {service.duration} min
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      {service.duration} min
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 font-medium text-foreground">
-                      Q{Number(service.price).toFixed(2)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditDialog(service)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      {isOwner && (
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 font-medium text-foreground">
+                        Q{Number(service.price).toFixed(2)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            if (confirm("¿Eliminar este servicio?")) {
-                              deleteMutation.mutate(service.id);
-                            }
-                          }}
+                          onClick={() => openEditDialog(service)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+                        {isOwner && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (confirm("¿Eliminar este servicio?")) {
+                                deleteMutation.mutate(service.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ))
+      )}
     </div>
   );
 }

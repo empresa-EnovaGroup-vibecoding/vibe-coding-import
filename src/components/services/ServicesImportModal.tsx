@@ -36,6 +36,7 @@ export interface ServiceColumnMapping {
 export const SERVICE_FIELD_LABELS: Record<string, string> = {
   name: "Nombre del Servicio",
   description: "Descripcion / Detalle",
+  category: "Categoria",
   duration: "Duracion (min)",
   price: "Precio (Q)",
 };

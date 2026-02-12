@@ -27,6 +27,7 @@ interface ServiceImportPreviewStepProps {
 interface MappedService {
   name: string;
   description: string | null;
+  category: string | null;
   duration: number;
   price: number;
   isValid: boolean;
@@ -57,6 +58,8 @@ export default function ServiceImportPreviewStep({
   };
 
   const mappedServices: MappedService[] = useMemo(() => {
+    let currentCategory: string | null = null;
+
     return data.rows.map((row) => {
       const errors: string[] = [];
 
@@ -67,9 +70,20 @@ export default function ServiceImportPreviewStep({
       const duration = mapping.duration
         ? Math.round(parseNumericValue(row[mapping.duration]))
         : 30;
-      const price = mapping.price
-        ? parseNumericValue(row[mapping.price])
-        : 0;
+      const rawPrice = mapping.price ? String(row[mapping.price] || "").trim() : "";
+      const price = parseNumericValue(rawPrice);
+
+      // Detect category rows: has name, but no valid price and no description
+      const isCategoryRow = name && !description && (price <= 0 || rawPrice.toLowerCase() === "consultar");
+      // Also check if the name looks like a category header (all caps or starts with emoji)
+      const looksLikeCategory = /^[^a-z]*$/.test(name) || name === name.toUpperCase();
+
+      if (isCategoryRow && looksLikeCategory && name.length > 1) {
+        // Clean category name: remove emojis and extra symbols
+        currentCategory = name.replace(/[^\w\sáéíóúñÁÉÍÓÚÑ()/-]/g, "").trim();
+        errors.push("Categoria (no se importa)");
+        return { name, description, category: null, duration, price, isValid: false, errors };
+      }
 
       if (!name) errors.push("Nombre vacio");
       if (price <= 0) errors.push("Precio invalido");
@@ -78,6 +92,7 @@ export default function ServiceImportPreviewStep({
       return {
         name,
         description,
+        category: currentCategory,
         duration,
         price,
         isValid: errors.length === 0,
@@ -119,7 +134,7 @@ export default function ServiceImportPreviewStep({
     importMutation.mutate(validServices);
   };
 
-  const displayColumns = ["name", "description", "duration", "price"] as const;
+  const displayColumns = ["name", "description", "category", "price"] as const;
 
   return (
     <div className="space-y-4">
@@ -146,7 +161,7 @@ export default function ServiceImportPreviewStep({
         </div>
       )}
 
-      <ScrollArea className="h-64 rounded-md border">
+      <ScrollArea className="h-80 rounded-md border">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -158,7 +173,7 @@ export default function ServiceImportPreviewStep({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mappedServices.slice(0, 50).map((service, index) => (
+            {mappedServices.slice(0, 100).map((service, index) => (
               <TableRow
                 key={index}
                 className={!service.isValid ? "bg-destructive/5" : ""}
@@ -166,7 +181,7 @@ export default function ServiceImportPreviewStep({
                 <TableCell className="text-muted-foreground">{index + 1}</TableCell>
                 <TableCell className="font-medium">{service.name || "-"}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{service.description || "-"}</TableCell>
-                <TableCell>{service.duration} min</TableCell>
+                <TableCell className="text-xs">{service.category || "-"}</TableCell>
                 <TableCell>Q{service.price.toFixed(2)}</TableCell>
                 <TableCell>
                   {service.isValid ? (
@@ -181,9 +196,9 @@ export default function ServiceImportPreviewStep({
             ))}
           </TableBody>
         </Table>
-        {mappedServices.length > 50 && (
+        {mappedServices.length > 100 && (
           <p className="text-center text-sm text-muted-foreground py-2">
-            Mostrando 50 de {mappedServices.length} filas...
+            Mostrando 100 de {mappedServices.length} filas...
           </p>
         )}
       </ScrollArea>
