@@ -20,7 +20,7 @@ interface ServiceColumnMappingStepProps {
 }
 
 const REQUIRED_FIELDS: (keyof ServiceColumnMapping)[] = ["name", "price"];
-const ALL_FIELDS: (keyof ServiceColumnMapping)[] = ["name", "duration", "price"];
+const ALL_FIELDS: (keyof ServiceColumnMapping)[] = ["name", "description", "duration", "price"];
 
 export default function ServiceColumnMappingStep({
   headers,

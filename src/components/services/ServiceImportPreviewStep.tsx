@@ -26,6 +26,7 @@ interface ServiceImportPreviewStepProps {
 
 interface MappedService {
   name: string;
+  description: string | null;
   duration: number;
   price: number;
   isValid: boolean;
@@ -60,6 +61,9 @@ export default function ServiceImportPreviewStep({
       const errors: string[] = [];
 
       const name = mapping.name ? String(row[mapping.name] || "").trim() : "";
+      const description = mapping.description
+        ? String(row[mapping.description] || "").trim() || null
+        : null;
       const duration = mapping.duration
         ? Math.round(parseNumericValue(row[mapping.duration]))
         : 30;
@@ -73,6 +77,7 @@ export default function ServiceImportPreviewStep({
 
       return {
         name,
+        description,
         duration,
         price,
         isValid: errors.length === 0,
@@ -114,7 +119,7 @@ export default function ServiceImportPreviewStep({
     importMutation.mutate(validServices);
   };
 
-  const displayColumns = ["name", "duration", "price"] as const;
+  const displayColumns = ["name", "description", "duration", "price"] as const;
 
   return (
     <div className="space-y-4">
@@ -160,6 +165,7 @@ export default function ServiceImportPreviewStep({
               >
                 <TableCell className="text-muted-foreground">{index + 1}</TableCell>
                 <TableCell className="font-medium">{service.name || "-"}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">{service.description || "-"}</TableCell>
                 <TableCell>{service.duration} min</TableCell>
                 <TableCell>Q{service.price.toFixed(2)}</TableCell>
                 <TableCell>

@@ -28,12 +28,14 @@ export interface ParsedData {
 
 export interface ServiceColumnMapping {
   name: string | null;
+  description: string | null;
   duration: string | null;
   price: string | null;
 }
 
 export const SERVICE_FIELD_LABELS: Record<string, string> = {
   name: "Nombre del Servicio",
+  description: "Descripcion / Detalle",
   duration: "Duracion (min)",
   price: "Precio (Q)",
 };
@@ -47,6 +49,7 @@ export default function ServicesImportModal({
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [columnMapping, setColumnMapping] = useState<ServiceColumnMapping>({
     name: null,
+    description: null,
     duration: null,
     price: null,
   });
@@ -64,12 +67,14 @@ export default function ServicesImportModal({
 
     const mapping: ServiceColumnMapping = {
       name: null,
+      description: null,
       duration: null,
       price: null,
     };
 
     const aliases: Record<keyof ServiceColumnMapping, string[]> = {
       name: ["nombre", "servicio", "service", "tratamiento", "name", "nombredelservicio"],
+      description: ["detalle", "descripcion", "description", "detail", "nota", "notas"],
       duration: ["duracion", "tiempo", "minutos", "minutes", "min", "duration", "time", "tiempomin"],
       price: ["precio", "tarifa", "price", "rate", "valor", "precioq"],
     };
@@ -111,7 +116,7 @@ export default function ServicesImportModal({
   const handleClose = () => {
     setStep("source");
     setParsedData(null);
-    setColumnMapping({ name: null, duration: null, price: null });
+    setColumnMapping({ name: null, description: null, duration: null, price: null });
     onOpenChange(false);
   };
 

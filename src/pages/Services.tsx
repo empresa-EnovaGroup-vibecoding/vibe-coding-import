@@ -5,6 +5,7 @@ import { useTenant } from "@/hooks/useTenant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ import { toast } from "sonner";
 interface Service {
   id: string;
   name: string;
+  description: string | null;
   duration: number;
   price: number;
 }
@@ -38,6 +40,7 @@ export default function Services() {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [formData, setFormData] = useState({
     name: "",
+    description: "",
     duration: "30",
     price: "",
   });
@@ -63,6 +66,7 @@ export default function Services() {
       if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase.from("services").insert([{
         name: data.name,
+        description: data.description || null,
         duration: parseInt(data.duration),
         price: parseFloat(data.price) || 0,
         tenant_id: tenantId,
@@ -86,6 +90,7 @@ export default function Services() {
         .from("services")
         .update({
           name: data.name,
+          description: data.description || null,
           duration: parseInt(data.duration),
           price: parseFloat(data.price) || 0,
         })
@@ -125,13 +130,14 @@ export default function Services() {
   const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingService(null);
-    setFormData({ name: "", duration: "30", price: "" });
+    setFormData({ name: "", description: "", duration: "30", price: "" });
   };
 
   const openEditDialog = (service: Service) => {
     setEditingService(service);
     setFormData({
       name: service.name,
+      description: service.description || "",
       duration: service.duration.toString(),
       price: service.price.toString(),
     });
@@ -188,6 +194,16 @@ export default function Services() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Ej: Corte de cabello"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Descripcion / Detalle</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Ej: Limpieza profunda con productos premium"
+                  rows={2}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -266,7 +282,12 @@ export default function Services() {
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                         <Scissors className="h-5 w-5 text-primary" />
                       </div>
-                      <span className="font-medium text-foreground">{service.name}</span>
+                      <div>
+                        <span className="font-medium text-foreground">{service.name}</span>
+                        {service.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{service.description}</p>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
