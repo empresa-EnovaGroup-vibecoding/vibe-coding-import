@@ -95,7 +95,7 @@ export default function Reports() {
 
       // Count services
       const serviceCounts: Record<string, { name: string; count: number }> = {};
-      data?.forEach((item) => {
+      data?.forEach((item: any) => {
         const name = item.services?.name || "Desconocido";
         if (!serviceCounts[name]) {
           serviceCounts[name] = { name, count: 0 };
@@ -142,7 +142,7 @@ export default function Reports() {
         totalSpent: number;
       }> = {};
 
-      appointments?.forEach((apt) => {
+      appointments?.forEach((apt: any) => {
         const name = apt.clients?.name || "Desconocido";
         const id = apt.client_id;
         if (!clientStats[id]) {
@@ -151,7 +151,7 @@ export default function Reports() {
         clientStats[id].appointments++;
       });
 
-      sales?.forEach((sale) => {
+      sales?.forEach((sale: any) => {
         const id = sale.client_id;
         if (id && clientStats[id]) {
           clientStats[id].purchases++;

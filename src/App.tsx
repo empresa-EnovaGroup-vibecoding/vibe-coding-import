@@ -25,9 +25,9 @@ import Cabins from "./pages/Cabins";
 import Membership from "./pages/Membership";
 import Admin from "./pages/Admin";
 import Onboarding from "./pages/Onboarding";
-import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard";
-import SuperAdminTenants from "./pages/super-admin/SuperAdminTenants";
-import SuperAdminRevenue from "./pages/super-admin/SuperAdminRevenue";
+import { SuperAdminDashboard } from "./pages/super-admin/SuperAdminDashboard";
+import { SuperAdminTenants } from "./pages/super-admin/SuperAdminTenants";
+import { SuperAdminRevenue } from "./pages/super-admin/SuperAdminRevenue";
 
 const queryClient = new QueryClient();
 
