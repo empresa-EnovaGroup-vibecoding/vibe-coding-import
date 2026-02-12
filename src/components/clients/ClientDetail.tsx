@@ -10,9 +10,10 @@ import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { FacialEvaluationForm } from "./FacialEvaluationForm";
 import { EvaluationHistoryList } from "./EvaluationHistoryList";
-import { EvaluationDetail } from "./EvaluationDetail";
+import EvaluationFormSelector from "./EvaluationFormSelector";
+import DynamicEvaluationForm from "./DynamicEvaluationForm";
+import DynamicEvaluationDetail from "./DynamicEvaluationDetail";
 import { ClientPackages } from "./ClientPackages";
 import { EditClientDialog } from "./EditClientDialog";
 
@@ -43,12 +44,13 @@ const statusConfig = {
   cancelled: { label: "Cancelada", class: "status-cancelled" },
 };
 
-type ViewMode = "detail" | "newEvaluation" | "viewEvaluation";
+type ViewMode = "detail" | "selectFormType" | "newEvaluation" | "viewEvaluation";
 
 export function ClientDetail({ client, onBack }: ClientDetailProps) {
   const [notes, setNotes] = useState(client.notes || "");
   const [viewMode, setViewMode] = useState<ViewMode>("detail");
   const [selectedEvaluationId, setSelectedEvaluationId] = useState<string | null>(null);
+  const [selectedFormType, setSelectedFormType] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("general");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -121,19 +123,35 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
   );
 
   // Handle sub-views for evaluations
-  if (viewMode === "newEvaluation") {
+  if (viewMode === "selectFormType") {
     return (
-      <FacialEvaluationForm
-        clientId={client.id}
+      <EvaluationFormSelector
+        onSelect={(formType) => {
+          setSelectedFormType(formType);
+          setViewMode("newEvaluation");
+        }}
         onBack={() => setViewMode("detail")}
-        onSuccess={() => setViewMode("detail")}
+      />
+    );
+  }
+
+  if (viewMode === "newEvaluation" && selectedFormType) {
+    return (
+      <DynamicEvaluationForm
+        clientId={client.id}
+        formType={selectedFormType}
+        onBack={() => setViewMode("selectFormType")}
+        onSuccess={() => {
+          setSelectedFormType(null);
+          setViewMode("detail");
+        }}
       />
     );
   }
 
   if (viewMode === "viewEvaluation" && selectedEvaluationId) {
     return (
-      <EvaluationDetail
+      <DynamicEvaluationDetail
         evaluationId={selectedEvaluationId}
         onBack={() => {
           setViewMode("detail");
@@ -448,7 +466,7 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
           <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <EvaluationHistoryList
               clientId={client.id}
-              onNewEvaluation={() => setViewMode("newEvaluation")}
+              onNewEvaluation={() => setViewMode("selectFormType")}
               onViewEvaluation={(evaluationId) => {
                 setSelectedEvaluationId(evaluationId);
                 setViewMode("viewEvaluation");

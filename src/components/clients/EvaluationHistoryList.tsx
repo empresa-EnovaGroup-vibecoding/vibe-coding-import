@@ -5,20 +5,23 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Calendar } from "lucide-react";
 import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { FORM_TYPE_MAP } from "@/lib/evaluation-forms";
 
 const formatDate = (dateString: string | null | undefined, formatStr: string) => {
   if (!dateString) return "Fecha no disponible";
   const date = typeof dateString === 'string' ? parseISO(dateString) : new Date(dateString);
-  return isValid(date) ? format(date, formatStr, { locale: es }) : "Fecha inválida";
+  return isValid(date) ? format(date, formatStr, { locale: es }) : "Fecha invalida";
 };
 
-const skinTypeLabels: Record<string, string> = {
-  normal: "Normal",
-  dry: "Seca",
-  combination: "Mixta",
-  oily: "Grasa",
-  sensitive: "Sensible",
-  acneic: "Acneica",
+const COLOR_CLASSES: Record<string, string> = {
+  pink: "bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300",
+  purple: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+  blue: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  red: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
+  orange: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+  teal: "bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+  amber: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  green: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
 };
 
 interface EvaluationHistoryListProps {
@@ -36,8 +39,8 @@ export function EvaluationHistoryList({
     queryKey: ["clientEvaluations", clientId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("facial_evaluations")
-        .select("*")
+        .from("clinical_evaluations")
+        .select("id, form_type, diagnosis, treatment_cabin, created_at")
         .eq("client_id", clientId)
         .order("created_at", { ascending: false });
 
@@ -48,16 +51,14 @@ export function EvaluationHistoryList({
 
   return (
     <div className="space-y-4">
-      {/* Header with New Evaluation button */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">Historial Clínico</h3>
+        <h3 className="text-lg font-semibold text-foreground">Historial Clinico</h3>
         <Button onClick={onNewEvaluation} className="gap-2">
           <Plus className="h-4 w-4" />
-          Nueva Evaluación
+          Nueva Evaluacion
         </Button>
       </div>
 
-      {/* Evaluations list */}
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -70,48 +71,53 @@ export function EvaluationHistoryList({
           <p className="text-muted-foreground mb-4">No hay evaluaciones registradas</p>
           <Button onClick={onNewEvaluation} variant="outline" className="gap-2">
             <Plus className="h-4 w-4" />
-            Crear Primera Evaluación
+            Crear Primera Evaluacion
           </Button>
         </div>
       ) : (
         <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-          {evaluations.map((evaluation) => (
-            <button
-              key={evaluation.id}
-              onClick={() => onViewEvaluation(evaluation.id)}
-              className="w-full text-left rounded-lg border border-border bg-muted/30 p-4 hover:bg-muted/50 hover:border-primary/50 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2 text-foreground">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">
-                    {formatDate(evaluation.created_at, "d 'de' MMMM, yyyy")}
-                  </span>
+          {evaluations.map((evaluation) => {
+            const formDef = FORM_TYPE_MAP[evaluation.form_type];
+            const colorClass = formDef ? COLOR_CLASSES[formDef.color] || "" : "";
+
+            return (
+              <button
+                key={evaluation.id}
+                onClick={() => onViewEvaluation(evaluation.id)}
+                className="w-full text-left rounded-lg border border-border bg-muted/30 p-4 hover:bg-muted/50 hover:border-primary/50 transition-colors"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">
+                      {formatDate(evaluation.created_at, "d 'de' MMMM, yyyy")}
+                    </span>
+                  </div>
+                  <Badge className={`text-xs border-0 ${colorClass}`}>
+                    {formDef?.label || evaluation.form_type}
+                  </Badge>
                 </div>
-                <Badge variant="secondary" className="text-xs">
-                  Piel {skinTypeLabels[evaluation.skin_type] || evaluation.skin_type}
-                </Badge>
-              </div>
 
-              {evaluation.treatment_performed && (
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                  <span className="font-medium text-foreground">Tratamiento:</span>{" "}
-                  {evaluation.treatment_performed}
+                {evaluation.diagnosis && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                    <span className="font-medium text-foreground">Diagnostico:</span>{" "}
+                    {evaluation.diagnosis}
+                  </p>
+                )}
+
+                {evaluation.treatment_cabin && !evaluation.diagnosis && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                    <span className="font-medium text-foreground">Tratamiento:</span>{" "}
+                    {evaluation.treatment_cabin}
+                  </p>
+                )}
+
+                <p className="text-xs text-muted-foreground mt-2">
+                  {formatDate(evaluation.created_at, "HH:mm")} hrs
                 </p>
-              )}
-
-              {evaluation.skin_analysis && !evaluation.treatment_performed && (
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                  <span className="font-medium text-foreground">Análisis:</span>{" "}
-                  {evaluation.skin_analysis}
-                </p>
-              )}
-
-              <p className="text-xs text-muted-foreground mt-2">
-                {formatDate(evaluation.created_at, "HH:mm")} hrs • Clic para ver detalles
-              </p>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
