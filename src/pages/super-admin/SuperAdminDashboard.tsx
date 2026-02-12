@@ -220,7 +220,14 @@ export function SuperAdminDashboard() {
                   {recentTenants && recentTenants.length > 0 ? (
                     recentTenants.map((tenant) => (
                       <TableRow key={tenant.id}>
-                        <TableCell className="font-medium">{tenant.name}</TableCell>
+                        <TableCell>
+                          <button
+                            className="font-medium text-left hover:underline hover:text-primary transition-colors"
+                            onClick={() => navigate(`/super-admin/tenants/${tenant.id}`)}
+                          >
+                            {tenant.name}
+                          </button>
+                        </TableCell>
                         <TableCell className="text-muted-foreground">{tenant.slug}</TableCell>
                         <TableCell>{getStatusBadge(tenant.subscription_status)}</TableCell>
                         <TableCell>{tenant.plan_type}</TableCell>

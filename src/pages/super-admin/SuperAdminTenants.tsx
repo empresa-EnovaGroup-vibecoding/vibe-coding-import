@@ -18,6 +18,7 @@ interface Tenant {
   name: string;
   slug: string;
   owner_id: string;
+  owner_email: string | null;
   subscription_status: SubscriptionStatus;
   plan_type: string;
   trial_ends_at: string;
@@ -46,13 +47,10 @@ export function SuperAdminTenants() {
   const { data: tenants, isLoading } = useQuery({
     queryKey: ["super-admin", "all-tenants"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tenants")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("get_tenants_with_owner_email");
 
       if (error) throw error;
-      return data as Tenant[];
+      return (data as Tenant[]) ?? [];
     },
   });
 
@@ -188,7 +186,7 @@ export function SuperAdminTenants() {
                   <TableRow>
                     <TableHead>Nombre</TableHead>
                     <TableHead>Slug</TableHead>
-                    <TableHead>Owner ID</TableHead>
+                    <TableHead>Owner</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Trial Expira</TableHead>
@@ -211,8 +209,8 @@ export function SuperAdminTenants() {
                         <TableCell className="text-muted-foreground">
                           {tenant.slug}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground font-mono">
-                          {tenant.owner_id.slice(0, 8)}...
+                        <TableCell className="text-sm text-muted-foreground">
+                          {tenant.owner_email ?? "Sin email"}
                         </TableCell>
                         <TableCell>{getStatusBadge(tenant.subscription_status)}</TableCell>
                         <TableCell>{tenant.plan_type}</TableCell>
