@@ -59,7 +59,12 @@ export default function ServicesImportModal({
     setParsedData(data);
     const autoMapping = autoMapColumns(data.headers);
     setColumnMapping(autoMapping);
-    setStep("mapping");
+    // If required fields (name + price) were auto-detected, skip mapping step
+    if (autoMapping.name && autoMapping.price) {
+      setStep("preview");
+    } else {
+      setStep("mapping");
+    }
   };
 
   const autoMapColumns = (headers: string[]): ServiceColumnMapping => {

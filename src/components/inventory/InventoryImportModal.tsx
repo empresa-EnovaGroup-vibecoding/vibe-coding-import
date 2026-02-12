@@ -68,7 +68,12 @@ export default function InventoryImportModal({
     // Try to auto-map columns
     const autoMapping = autoMapColumns(data.headers);
     setColumnMapping(autoMapping);
-    setStep("mapping");
+    // If all required fields were auto-detected, skip mapping step
+    if (autoMapping.name && autoMapping.sale_price && autoMapping.stock_level) {
+      setStep("preview");
+    } else {
+      setStep("mapping");
+    }
   };
 
   const autoMapColumns = (headers: string[]): ColumnMapping => {
