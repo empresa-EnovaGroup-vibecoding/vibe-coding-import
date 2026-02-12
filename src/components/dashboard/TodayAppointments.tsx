@@ -5,6 +5,7 @@ import { es } from "date-fns/locale";
 import { Clock, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WhatsAppButton } from "@/components/appointments/WhatsAppButton";
+import { BulkReminderButton } from "@/components/dashboard/BulkReminderButton";
 import { cn } from "@/lib/utils";
 
 const statusConfig = {
@@ -60,9 +61,14 @@ export function TodayAppointments() {
     <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground">Citas de Hoy</h3>
-        <span className="text-sm text-muted-foreground">
-          {format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}
-        </span>
+        <div className="flex items-center gap-3">
+          {appointments && appointments.length > 0 && (
+            <BulkReminderButton appointments={appointments} />
+          )}
+          <span className="text-sm text-muted-foreground hidden sm:inline">
+            {format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}
+          </span>
+        </div>
       </div>
 
       {!appointments || appointments.length === 0 ? (

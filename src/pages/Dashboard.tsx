@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { TodayAppointments } from "@/components/dashboard/TodayAppointments";
+import { InactiveClients } from "@/components/dashboard/InactiveClients";
 import { Calendar, Users, Package, AlertTriangle, DollarSign, CheckCircle2, ShoppingCart } from "lucide-react";
 import { useTenant } from "@/hooks/useTenant";
 
@@ -171,6 +172,7 @@ export default function Dashboard() {
       {/* Today's Appointments + Quick Actions */}
       <div className="grid gap-6 lg:grid-cols-2">
         <TodayAppointments />
+        <div className="space-y-6">
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-foreground mb-4">Acciones Rapidas</h3>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -203,6 +205,8 @@ export default function Dashboard() {
               <span className="font-medium">Inventario</span>
             </a>
           </div>
+        </div>
+        <InactiveClients />
         </div>
       </div>
     </div>
