@@ -22,6 +22,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Package, Search, Pencil, Trash2, AlertTriangle, FileUp } from "lucide-react";
 import InventoryImportModal from "@/components/inventory/InventoryImportModal";
 import { toast } from "sonner";
@@ -44,6 +55,8 @@ export default function Inventory() {
   const [page, setPage] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -164,6 +177,49 @@ export default function Inventory() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!tenantId) throw new Error("No tenant ID");
+      const { error } = await supabase
+        .from("inventory")
+        .delete()
+        .in("id", ids)
+        .eq("tenant_id", tenantId);
+      if (error) throw error;
+      for (const id of ids) {
+        await logAudit({ tenantId, action: "delete", entityType: "inventory", entityId: id, details: { bulk: true } });
+      }
+    },
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["inventory", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["lowStockCount", tenantId] });
+      setSelectedIds(new Set());
+      setShowBulkDeleteDialog(false);
+      toast.success(`${ids.length} producto(s) eliminado(s)`);
+    },
+    onError: () => {
+      toast.error("Error al eliminar los productos");
+    },
+  });
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!inventory) return;
+    if (selectedIds.size === inventory.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(inventory.map((item) => item.id)));
+    }
+  };
+
   const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingItem(null);
@@ -203,10 +259,11 @@ export default function Inventory() {
     }
   };
 
-  // Reset page when search changes
+  // Reset page and selection when search changes
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     setPage(0);
+    setSelectedIds(new Set());
   };
 
   const isLowStock = (stockLevel: number) => stockLevel < 5;
@@ -338,6 +395,31 @@ export default function Inventory() {
         />
       </div>
 
+      {/* Bulk actions bar */}
+      {isOwner && selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+          <span className="text-sm font-medium text-foreground">
+            {selectedIds.size} producto(s) seleccionado(s)
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="gap-1"
+            onClick={() => setShowBulkDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Eliminar seleccionados
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Deseleccionar
+          </Button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         {isLoading ? (
@@ -355,6 +437,15 @@ export default function Inventory() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
+                  {isOwner && (
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={inventory.length > 0 && selectedIds.size === inventory.length}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Seleccionar todos"
+                      />
+                    </TableHead>
+                  )}
                   <TableHead>Producto</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Stock</TableHead>
@@ -366,7 +457,16 @@ export default function Inventory() {
               </TableHeader>
               <TableBody>
                 {inventory.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.id} className={selectedIds.has(item.id) ? "bg-primary/5" : ""}>
+                    {isOwner && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(item.id)}
+                          onCheckedChange={() => toggleSelect(item.id)}
+                          aria-label={`Seleccionar ${item.name}`}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className={cn(
@@ -439,9 +539,31 @@ export default function Inventory() {
         <TablePagination
           page={page}
           totalCount={totalCount}
-          onPageChange={setPage}
+          onPageChange={(p) => { setPage(p); setSelectedIds(new Set()); }}
         />
       </div>
+
+      {/* Bulk delete confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar {selectedIds.size} producto(s)</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta accion no se puede deshacer. Se eliminaran permanentemente los productos seleccionados del inventario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => bulkDeleteMutation.mutate([...selectedIds])}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
