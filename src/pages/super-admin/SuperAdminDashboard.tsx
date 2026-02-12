@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Building2, CheckCircle2, Clock, DollarSign, Loader2 } from "lucide-react";
+import { Building2, CheckCircle2, Clock, DollarSign, Loader2, AlertTriangle, Users } from "lucide-react";
 
 type SubscriptionStatus = "trial" | "active" | "past_due" | "cancelled" | "expired";
 
@@ -13,100 +13,82 @@ interface Tenant {
   id: string;
   name: string;
   slug: string;
+  owner_id: string;
+  owner_email: string | null;
   subscription_status: SubscriptionStatus;
   plan_type: string;
+  trial_ends_at: string;
+  current_period_end: string | null;
   created_at: string;
 }
 
-/**
- * Dashboard principal del Super Admin.
- *
- * Muestra:
- * - 4 métricas clave (total negocios, activos, en trial, MRR)
- * - Tabla con últimos 10 negocios registrados
- * - Badge coloreado por estado de suscripción
- */
 export function SuperAdminDashboard() {
   const navigate = useNavigate();
 
-  // Query: Total de negocios
-  const { data: totalTenants, isLoading: loadingTotal } = useQuery({
-    queryKey: ["super-admin", "total-tenants"],
+  // Query: All tenants with owner email (single efficient query)
+  const { data: allTenants, isLoading: loadingTenants } = useQuery({
+    queryKey: ["super-admin", "all-tenants-dashboard"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_tenants_with_owner_email");
+      if (error) throw error;
+      return (data as Tenant[]) ?? [];
+    },
+  });
+
+  // Query: Total clients across all tenants
+  const { data: totalClients, isLoading: loadingClients } = useQuery({
+    queryKey: ["super-admin", "total-clients"],
     queryFn: async () => {
       const { count, error } = await supabase
-        .from("tenants")
+        .from("clients")
         .select("*", { count: "exact", head: true });
-
       if (error) throw error;
       return count ?? 0;
     },
   });
 
-  // Query: Negocios activos
-  const { data: activeTenants, isLoading: loadingActive } = useQuery({
-    queryKey: ["super-admin", "active-tenants"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("tenants")
-        .select("*", { count: "exact", head: true })
-        .eq("subscription_status", "active");
+  // Derived metrics
+  const totalTenants = allTenants?.length ?? 0;
+  const activeTenants = allTenants?.filter((t) => t.subscription_status === "active").length ?? 0;
+  const trialTenants = allTenants?.filter((t) => t.subscription_status === "trial").length ?? 0;
+  const mrr = activeTenants * 49;
 
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
+  // Trials expiring in next 7 days
+  const now = new Date();
+  const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const expiringTrials = allTenants?.filter((t) => {
+    if (t.subscription_status !== "trial" || !t.trial_ends_at) return false;
+    const trialEnd = new Date(t.trial_ends_at);
+    return trialEnd <= sevenDaysFromNow && trialEnd >= now;
+  }) ?? [];
 
-  // Query: Negocios en trial
-  const { data: trialTenants, isLoading: loadingTrial } = useQuery({
-    queryKey: ["super-admin", "trial-tenants"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("tenants")
-        .select("*", { count: "exact", head: true })
-        .eq("subscription_status", "trial");
+  // Recent tenants (last 10)
+  const recentTenants = allTenants?.slice(0, 10) ?? [];
 
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
-
-  // Query: Últimos negocios registrados
-  const { data: recentTenants, isLoading: loadingRecent } = useQuery({
-    queryKey: ["super-admin", "recent-tenants"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tenants")
-        .select("id, name, slug, subscription_status, plan_type, created_at")
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      return data as Tenant[];
-    },
-  });
-
-  // Calcular MRR (Monthly Recurring Revenue)
-  const mrr = (activeTenants ?? 0) * 49;
+  const isLoading = loadingTenants;
 
   // Helper: Badge color por estado
   const getStatusBadge = (status: SubscriptionStatus) => {
     const variants = {
-      active: { variant: "default" as const, className: "bg-green-500 hover:bg-green-600" },
-      trial: { variant: "default" as const, className: "bg-blue-500 hover:bg-blue-600" },
-      expired: { variant: "default" as const, className: "bg-red-500 hover:bg-red-600" },
-      past_due: { variant: "default" as const, className: "bg-yellow-500 hover:bg-yellow-600" },
-      cancelled: { variant: "default" as const, className: "bg-gray-500 hover:bg-gray-600" },
+      active: { className: "bg-green-500 hover:bg-green-600" },
+      trial: { className: "bg-blue-500 hover:bg-blue-600" },
+      expired: { className: "bg-red-500 hover:bg-red-600" },
+      past_due: { className: "bg-yellow-500 hover:bg-yellow-600" },
+      cancelled: { className: "bg-gray-500 hover:bg-gray-600" },
     };
-
     const config = variants[status];
     return (
-      <Badge variant={config.variant} className={config.className}>
+      <Badge className={config.className}>
         {status}
       </Badge>
     );
   };
 
-  const isLoadingMetrics = loadingTotal || loadingActive || loadingTrial;
+  // Helper: days until trial expires
+  const daysUntilExpiry = (dateStr: string): number => {
+    const diff = new Date(dateStr).getTime() - now.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
 
   return (
     <div className="space-y-6">
@@ -119,15 +101,14 @@ export function SuperAdminDashboard() {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total Negocios */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Negocios</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoadingMetrics ? (
+            {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             ) : (
               <>
@@ -138,32 +119,30 @@ export function SuperAdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Negocios Activos */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Negocios Activos</CardTitle>
+            <CardTitle className="text-sm font-medium">Activos</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            {isLoadingMetrics ? (
+            {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             ) : (
               <>
                 <div className="text-2xl font-bold">{activeTenants}</div>
-                <p className="text-xs text-muted-foreground">Con suscripción activa</p>
+                <p className="text-xs text-muted-foreground">Suscripcion activa</p>
               </>
             )}
           </CardContent>
         </Card>
 
-        {/* En Trial */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">En Trial</CardTitle>
             <Clock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            {isLoadingMetrics ? (
+            {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             ) : (
               <>
@@ -174,33 +153,93 @@ export function SuperAdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* MRR */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
+            <Users className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            {loadingClients ? (
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{totalClients}</div>
+                <p className="text-xs text-muted-foreground">En toda la plataforma</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">MRR</CardTitle>
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            {isLoadingMetrics ? (
+            {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             ) : (
               <>
                 <div className="text-2xl font-bold">${mrr} USD</div>
-                <p className="text-xs text-muted-foreground">Ingresos mensuales recurrentes</p>
+                <p className="text-xs text-muted-foreground">Ingresos mensuales</p>
               </>
             )}
           </CardContent>
         </Card>
       </div>
 
+      {/* Trials Expiring Soon */}
+      {expiringTrials.length > 0 && (
+        <Card className="border-yellow-300 dark:border-yellow-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
+              <AlertTriangle className="h-5 w-5" />
+              Trials por Vencer ({expiringTrials.length})
+            </CardTitle>
+            <CardDescription>Negocios cuyo trial expira en los proximos 7 dias</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {expiringTrials.map((tenant) => {
+                const days = daysUntilExpiry(tenant.trial_ends_at);
+                return (
+                  <div
+                    key={tenant.id}
+                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 cursor-pointer"
+                    onClick={() => navigate(`/super-admin/tenants/${tenant.id}`)}
+                  >
+                    <div>
+                      <p className="font-medium">{tenant.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {tenant.owner_email ?? "Sin email"}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={
+                        days <= 2
+                          ? "border-red-500 text-red-600"
+                          : "border-yellow-500 text-yellow-600"
+                      }
+                    >
+                      {days <= 0 ? "Vence hoy" : `${days} dia${days > 1 ? "s" : ""}`}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recent Tenants Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Últimos Negocios Registrados</CardTitle>
-          <CardDescription>Los 10 negocios más recientes en la plataforma</CardDescription>
+          <CardTitle>Ultimos Negocios Registrados</CardTitle>
+          <CardDescription>Los 10 negocios mas recientes en la plataforma</CardDescription>
         </CardHeader>
         <CardContent>
-          {loadingRecent ? (
+          {loadingTenants ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
@@ -210,14 +249,14 @@ export function SuperAdminDashboard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nombre</TableHead>
-                    <TableHead>Slug</TableHead>
+                    <TableHead>Owner</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Creado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentTenants && recentTenants.length > 0 ? (
+                  {recentTenants.length > 0 ? (
                     recentTenants.map((tenant) => (
                       <TableRow key={tenant.id}>
                         <TableCell>
@@ -228,7 +267,9 @@ export function SuperAdminDashboard() {
                             {tenant.name}
                           </button>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{tenant.slug}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {tenant.owner_email ?? "Sin email"}
+                        </TableCell>
                         <TableCell>{getStatusBadge(tenant.subscription_status)}</TableCell>
                         <TableCell>{tenant.plan_type}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
@@ -246,7 +287,7 @@ export function SuperAdminDashboard() {
                 </TableBody>
               </Table>
 
-              {recentTenants && recentTenants.length > 0 && (
+              {recentTenants.length > 0 && (
                 <div className="mt-4 flex justify-end">
                   <Button
                     variant="outline"
