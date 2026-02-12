@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Loader2, Camera, Trash2, Globe } from "lucide-react";
+import { Building2, Loader2, Camera, Trash2, Globe, Link2, Copy, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { BusinessHoursCard } from "@/components/settings/BusinessHoursCard";
@@ -33,6 +33,7 @@ export default function Settings() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Redirect staff users
   useEffect(() => {
@@ -329,6 +330,44 @@ export default function Settings() {
       </Card>
 
       <BusinessHoursCard />
+
+      {/* Booking Link */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Link2 className="h-5 w-5" />
+            Link de Reservas Online
+          </CardTitle>
+          <CardDescription>
+            Comparte este link con tus clientes para que reserven citas desde su celular.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Input
+              value={`${window.location.origin}/book/${tenant.slug}`}
+              readOnly
+              className="bg-muted text-muted-foreground"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/book/${tenant.slug}`);
+                setLinkCopied(true);
+                toast.success("Link copiado al portapapeles");
+                setTimeout(() => setLinkCopied(false), 2000);
+              }}
+            >
+              {linkCopied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Tus clientes podran ver tus servicios, elegir fecha/hora, y subir comprobante de pago.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

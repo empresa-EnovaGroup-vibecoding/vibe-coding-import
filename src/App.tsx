@@ -30,6 +30,7 @@ import Settings from "./pages/Settings";
 import Expenses from "./pages/Expenses";
 import Onboarding from "./pages/Onboarding";
 import AcceptInvite from "./pages/AcceptInvite";
+import PublicBooking from "./pages/PublicBooking";
 import { SuperAdminDashboard } from "./pages/super-admin/SuperAdminDashboard";
 import { SuperAdminTenants } from "./pages/super-admin/SuperAdminTenants";
 import { SuperAdminRevenue } from "./pages/super-admin/SuperAdminRevenue";
@@ -68,6 +69,7 @@ const App = () => (
               {/* Public routes */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/invite/:token" element={<AcceptInvite />} />
+              <Route path="/book/:slug" element={<PublicBooking />} />
 
               {/* Onboarding - requires auth but NOT tenant */}
               <Route
