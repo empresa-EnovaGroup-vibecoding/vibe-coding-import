@@ -40,6 +40,8 @@ import {
   User,
   CreditCard,
   Search,
+  Banknote,
+  ArrowLeftRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -86,6 +88,7 @@ export default function POS() {
   const [notes, setNotes] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"products" | "services">("products");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -146,6 +149,7 @@ export default function POS() {
             total_amount: calculateTotal(),
             notes: notes || null,
             tenant_id: tenantId,
+            payment_method: paymentMethod,
           },
         ])
         .select()
@@ -196,6 +200,7 @@ export default function POS() {
       setCart([]);
       setSelectedClient("");
       setNotes("");
+      setPaymentMethod("cash");
       toast.success("¡Venta registrada con éxito!");
     },
     onError: () => {
@@ -528,6 +533,52 @@ export default function POS() {
                 placeholder="Notas de la venta..."
                 rows={2}
               />
+            </div>
+
+            {/* Payment Method */}
+            <div className="space-y-2">
+              <Label>Metodo de Pago</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("cash")}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-sm font-medium transition-all",
+                    paymentMethod === "cash"
+                      ? "border-green-500 bg-green-50 text-green-700"
+                      : "border-border bg-card text-muted-foreground hover:border-green-300"
+                  )}
+                >
+                  <Banknote className="h-5 w-5" />
+                  Efectivo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("card")}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-sm font-medium transition-all",
+                    paymentMethod === "card"
+                      ? "border-blue-500 bg-blue-50 text-blue-700"
+                      : "border-border bg-card text-muted-foreground hover:border-blue-300"
+                  )}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  Tarjeta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("transfer")}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-sm font-medium transition-all",
+                    paymentMethod === "transfer"
+                      ? "border-purple-500 bg-purple-50 text-purple-700"
+                      : "border-border bg-card text-muted-foreground hover:border-purple-300"
+                  )}
+                >
+                  <ArrowLeftRight className="h-5 w-5" />
+                  Transferencia
+                </button>
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex-col gap-4 border-t pt-4">
