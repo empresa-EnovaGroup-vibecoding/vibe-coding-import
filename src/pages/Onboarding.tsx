@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Building2, Loader2, CheckCircle, AlertCircle, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -31,7 +31,7 @@ function generateSlug(name: string): string {
 }
 
 export default function Onboarding() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { refetch, hasTenant } = useTenant();
   const navigate = useNavigate();
 
@@ -228,6 +228,20 @@ export default function Onboarding() {
               7 dias gratis. No se requiere tarjeta de credito.
             </p>
           </form>
+
+          <div className="mt-4 pt-4 border-t border-border text-center">
+            <button
+              type="button"
+              onClick={async () => {
+                await signOut();
+                navigate("/auth", { replace: true });
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+            >
+              <LogOut className="h-3 w-3" />
+              Cerrar sesion e ir a login
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>
