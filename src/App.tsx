@@ -8,6 +8,7 @@ import { TenantProvider, useTenant } from "@/hooks/useTenant";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { RequireSuperAdmin } from "@/components/auth/RequireSuperAdmin";
 import { RequireOwner } from "@/components/auth/RequireOwner";
+import { RequireSubscription } from "@/components/auth/RequireSubscription";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SuperAdminLayout } from "@/components/super-admin/SuperAdminLayout";
 import Index from "./pages/Index";
@@ -127,15 +128,17 @@ const App = () => (
                 }
               />
 
-              {/* Business Panel - requires auth + tenant */}
+              {/* Business Panel - requires auth + tenant + active subscription */}
               <Route
                 path="/"
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Index />
-                      </MainLayout>
+                      <RequireSubscription>
+                        <MainLayout>
+                          <Index />
+                        </MainLayout>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -145,9 +148,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Clients />
-                      </MainLayout>
+                      <RequireSubscription>
+                        <MainLayout>
+                          <Clients />
+                        </MainLayout>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -157,9 +162,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Services />
-                      </MainLayout>
+                      <RequireSubscription>
+                        <MainLayout>
+                          <Services />
+                        </MainLayout>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -169,9 +176,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Inventory />
-                      </MainLayout>
+                      <RequireSubscription>
+                        <MainLayout>
+                          <Inventory />
+                        </MainLayout>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -181,9 +190,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Appointments />
-                      </MainLayout>
+                      <RequireSubscription>
+                        <MainLayout>
+                          <Appointments />
+                        </MainLayout>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -193,9 +204,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <POS />
-                      </MainLayout>
+                      <RequireSubscription>
+                        <MainLayout>
+                          <POS />
+                        </MainLayout>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -205,9 +218,11 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <MainLayout>
-                        <Reports />
-                      </MainLayout>
+                      <RequireSubscription>
+                        <MainLayout>
+                          <Reports />
+                        </MainLayout>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -217,11 +232,13 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <RequireOwner>
-                        <MainLayout>
-                          <UserManagement />
-                        </MainLayout>
-                      </RequireOwner>
+                      <RequireSubscription>
+                        <RequireOwner>
+                          <MainLayout>
+                            <UserManagement />
+                          </MainLayout>
+                        </RequireOwner>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -231,11 +248,13 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <RequireOwner>
-                        <MainLayout>
-                          <Packages />
-                        </MainLayout>
-                      </RequireOwner>
+                      <RequireSubscription>
+                        <RequireOwner>
+                          <MainLayout>
+                            <Packages />
+                          </MainLayout>
+                        </RequireOwner>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -245,11 +264,13 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <RequireOwner>
-                        <MainLayout>
-                          <Team />
-                        </MainLayout>
-                      </RequireOwner>
+                      <RequireSubscription>
+                        <RequireOwner>
+                          <MainLayout>
+                            <Team />
+                          </MainLayout>
+                        </RequireOwner>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
@@ -259,15 +280,19 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <RequireOwner>
-                        <MainLayout>
-                          <Cabins />
-                        </MainLayout>
-                      </RequireOwner>
+                      <RequireSubscription>
+                        <RequireOwner>
+                          <MainLayout>
+                            <Cabins />
+                          </MainLayout>
+                        </RequireOwner>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
               />
+
+              {/* Membership - NO RequireSubscription (must be accessible to pay) */}
               <Route
                 path="/membership"
                 element={
@@ -280,16 +305,19 @@ const App = () => (
                   </RequireAuth>
                 }
               />
+
               <Route
                 path="/settings"
                 element={
                   <RequireAuth>
                     <RequireTenant>
-                      <RequireOwner>
-                        <MainLayout>
-                          <Settings />
-                        </MainLayout>
-                      </RequireOwner>
+                      <RequireSubscription>
+                        <RequireOwner>
+                          <MainLayout>
+                            <Settings />
+                          </MainLayout>
+                        </RequireOwner>
+                      </RequireSubscription>
                     </RequireTenant>
                   </RequireAuth>
                 }
