@@ -311,20 +311,20 @@ export default function Services() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Categoria</Label>
-                <Input
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder="Ej: FACIALES, MASAJES, etc."
-                  list="category-suggestions"
-                />
-                {categories.length > 0 && (
-                  <datalist id="category-suggestions">
+                <Select
+                  value={formData.category || "_none_"}
+                  onValueChange={(value) => setFormData({ ...formData, category: value === "_none_" ? "" : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none_">Sin categoria</SelectItem>
                     {categories.map((cat) => (
-                      <option key={cat} value={cat} />
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
-                  </datalist>
-                )}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
