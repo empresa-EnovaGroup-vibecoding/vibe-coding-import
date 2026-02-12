@@ -20,7 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Scissors, Clock, Pencil, Trash2 } from "lucide-react";
+import { Plus, Scissors, Clock, Pencil, Trash2, FileUp } from "lucide-react";
+import ServicesImportModal from "@/components/services/ServicesImportModal";
 import { toast } from "sonner";
 
 interface Service {
@@ -33,6 +34,7 @@ interface Service {
 export default function Services() {
   const { tenantId, isOwner } = useTenant();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -156,13 +158,22 @@ export default function Services() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Servicios</h1>
           <p className="text-muted-foreground mt-1">Catálogo de servicios disponibles</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-          <DialogTrigger asChild>
-            <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Nuevo Servicio
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            <FileUp className="h-4 w-4" />
+            Importar Servicios
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
+            <DialogTrigger asChild>
+              <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Nuevo Servicio
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -216,6 +227,13 @@ export default function Services() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
+
+        <ServicesImportModal
+          open={isImportModalOpen}
+          onOpenChange={setIsImportModalOpen}
+          onImportComplete={() => queryClient.invalidateQueries({ queryKey: ["services", tenantId] })}
+        />
       </div>
 
       {/* Table */}
