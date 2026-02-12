@@ -27,6 +27,7 @@ import Cabins from "./pages/Cabins";
 import Membership from "./pages/Membership";
 import Admin from "./pages/Admin";
 import Settings from "./pages/Settings";
+import Expenses from "./pages/Expenses";
 import Onboarding from "./pages/Onboarding";
 import AcceptInvite from "./pages/AcceptInvite";
 import { SuperAdminDashboard } from "./pages/super-admin/SuperAdminDashboard";
@@ -221,6 +222,20 @@ const App = () => (
                       <RequireSubscription>
                         <MainLayout>
                           <Reports />
+                        </MainLayout>
+                      </RequireSubscription>
+                    </RequireTenant>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/expenses"
+                element={
+                  <RequireAuth>
+                    <RequireTenant>
+                      <RequireSubscription>
+                        <MainLayout>
+                          <Expenses />
                         </MainLayout>
                       </RequireSubscription>
                     </RequireTenant>
