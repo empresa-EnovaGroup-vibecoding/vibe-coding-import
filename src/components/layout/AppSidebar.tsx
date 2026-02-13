@@ -111,9 +111,17 @@ export function AppSidebar() {
         <div className="flex h-full flex-col">
           {/* Logo / Brand */}
           <div className="flex h-16 items-center gap-3 border-b border-amber-800/20 px-6">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
-              <Scissors className="h-5 w-5 text-sidebar-primary-foreground" />
-            </div>
+            {tenant?.logo_url ? (
+              <img
+                src={tenant.logo_url}
+                alt={tenant.name}
+                className="h-9 w-9 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
+                <Scissors className="h-5 w-5 text-sidebar-primary-foreground" />
+              </div>
+            )}
             <div className="min-w-0">
               <h1 className="text-lg font-semibold text-primary-foreground truncate">
                 {tenant?.name ?? "Agenda PRO"}
