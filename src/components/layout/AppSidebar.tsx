@@ -118,7 +118,6 @@ export function AppSidebar() {
               <h1 className="text-lg font-semibold text-primary-foreground truncate">
                 {tenant?.name ?? "Agenda PRO"}
               </h1>
-              <p className="text-xs text-sidebar-foreground/60">Sistema de gestión</p>
             </div>
           </div>
 
@@ -152,17 +151,14 @@ export function AppSidebar() {
                   {user.email}
                 </p>
               </div>}
-            <Button 
-              variant="destructive" 
-              className="w-full justify-start gap-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium mt-2" 
+            <Button
+              variant="destructive"
+              className="w-full justify-start gap-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium mt-2"
               onClick={handleLogout}
             >
               <LogOut className="h-5 w-5" />
               Cerrar Sesión
             </Button>
-            <p className="text-xs text-sidebar-foreground/50 text-center">
-              © 2024 GestorPro
-            </p>
           </div>
         </div>
       </aside>

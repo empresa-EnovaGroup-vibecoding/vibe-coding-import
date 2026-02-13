@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTenant } from "@/hooks/useTenant";
 import { Button } from "@/components/ui/button";
-import { Crown } from "lucide-react";
+import { Crown, X } from "lucide-react";
 
 export function TrialBanner() {
   const { subscriptionStatus, daysLeftInTrial, tenant } = useTenant();
   const navigate = useNavigate();
   const [now, setNow] = useState(new Date());
+  const [dismissed, setDismissed] = useState(false);
 
   // Tick every minute to update countdown
   useEffect(() => {
@@ -16,6 +17,7 @@ export function TrialBanner() {
   }, []);
 
   // Only show during trial
+  if (dismissed) return null;
   if (subscriptionStatus !== "trial" || !tenant || daysLeftInTrial === null) return null;
 
   // Calculate hours remaining
@@ -58,6 +60,13 @@ export function TrialBanner() {
         <Crown className="h-3 w-3" />
         Actualizar Plan
       </Button>
+      <button
+        onClick={() => setDismissed(true)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+        aria-label="Cerrar banner"
+      >
+        <X className="h-4 w-4" />
+      </button>
     </div>
   );
 }
