@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save, ClipboardList, Gift, Pencil, DollarSign, TrendingUp, Scissors } from "lucide-react";
 import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCase } from "@/lib/utils";
 import { toast } from "sonner";
 import { EvaluationHistoryList } from "./EvaluationHistoryList";
 import EvaluationFormSelector from "./EvaluationFormSelector";
@@ -428,7 +428,7 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
                                 {sale.sale_items.map((item: { id: string; item_name: string; quantity: number; subtotal: number }) => (
                                   <div key={item.id} className="flex justify-between text-sm">
                                     <span>
-                                      {item.quantity}x {item.item_name}
+                                      {item.quantity}x {toTitleCase(item.item_name)}
                                     </span>
                                     <span className="text-muted-foreground">
                                       Q{Number(item.subtotal).toFixed(2)}

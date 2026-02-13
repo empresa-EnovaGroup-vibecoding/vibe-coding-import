@@ -36,7 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Package, Search, Pencil, Trash2, FileUp } from "lucide-react";
 import InventoryImportModal from "@/components/inventory/InventoryImportModal";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCase } from "@/lib/utils";
 import { useTenant } from "@/hooks/useTenant";
 
 interface InventoryItem {
@@ -267,9 +267,6 @@ export default function Inventory() {
   };
 
   const isLowStock = (stockLevel: number) => stockLevel < 5;
-
-  const toTitleCase = (str: string) =>
-    str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
     <div className="space-y-6 pt-12 lg:pt-0">

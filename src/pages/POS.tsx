@@ -47,7 +47,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCase } from "@/lib/utils";
 import { useTenant } from "@/hooks/useTenant";
 
 interface CartItem {
@@ -224,7 +224,7 @@ export default function POS() {
     );
     if (product) {
       addToCart(product, "product");
-      toast.success(`Producto añadido: ${product.name}`);
+      toast.success(`Producto añadido: ${toTitleCase(product.name)}`);
     } else {
       toast.error("Producto no encontrado con ese código");
     }
@@ -400,17 +400,20 @@ export default function POS() {
                   )}
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                      <Package className="h-5 w-5 text-primary" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/8 border border-primary/15">
+                      <Package className="h-4 w-4 text-primary" />
                     </div>
-                    <Badge
-                      variant={product.stock_level < 5 ? "destructive" : "secondary"}
-                    >
-                      {product.stock_level} uds
-                    </Badge>
+                    {product.stock_level < 5 ? (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        {product.stock_level} uds
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">{product.stock_level} uds</span>
+                    )}
                   </div>
                   <p className="font-medium text-foreground truncate">
-                    {product.name}
+                    {toTitleCase(product.name)}
                   </p>
                   <p className="text-lg font-bold text-primary">
                     Q{Number(product.sale_price).toFixed(2)}
@@ -499,7 +502,7 @@ export default function POS() {
                               <Scissors className="h-4 w-4 text-muted-foreground" />
                             )}
                             <span className="text-sm truncate max-w-[120px]">
-                              {item.name}
+                              {toTitleCase(item.name)}
                             </span>
                           </div>
                         </TableCell>

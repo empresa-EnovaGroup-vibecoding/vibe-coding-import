@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Calendar, Stethoscope, Sparkles, ClipboardList, ShoppingBag, Check, X } from "lucide-react";
 import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { toTitleCase } from "@/lib/utils";
 
 const formatDate = (dateString: string | null | undefined, formatStr: string) => {
   if (!dateString) return "Fecha no disponible";
@@ -263,7 +264,7 @@ export function EvaluationDetail({ evaluationId, onBack }: EvaluationDetailProps
                 >
                   <div>
                     <p className="font-medium text-foreground">
-                      {rec.inventory?.name || "Producto no disponible"}
+                      {rec.inventory?.name ? toTitleCase(rec.inventory.name) : "Producto no disponible"}
                     </p>
                     {rec.notes && (
                       <p className="text-sm text-muted-foreground mt-1">{rec.notes}</p>

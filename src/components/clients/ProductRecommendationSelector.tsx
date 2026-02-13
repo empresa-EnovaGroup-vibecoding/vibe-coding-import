@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, X, Package, Plus } from "lucide-react";
+import { toTitleCase } from "@/lib/utils";
 
 interface SelectedProduct {
   id: string;
@@ -99,7 +100,7 @@ export function ProductRecommendationSelector({
                     >
                       <div className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-muted-foreground" />
-                        <span>{product.name}</span>
+                        <span>{toTitleCase(product.name)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">
@@ -149,7 +150,7 @@ export function ProductRecommendationSelector({
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground">
-                      {product.name}
+                      {toTitleCase(product.name)}
                     </span>
                     <Button
                       type="button"
