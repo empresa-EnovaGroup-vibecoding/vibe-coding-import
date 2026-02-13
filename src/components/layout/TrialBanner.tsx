@@ -29,43 +29,50 @@ export function TrialBanner() {
   const days = Math.floor(totalHours / 24);
   const hours = totalHours % 24;
 
+  // Smart message: only show hours on last day
+  let message: string;
   let bannerStyle: string;
   let textStyle: string;
+  let buttonLabel: string;
   let buttonStyle: string;
 
   if (days >= 3) {
+    message = `${days} dias restantes`;
     bannerStyle = "bg-stone-900/80 dark:bg-stone-950/80 backdrop-blur-xl border-b border-amber-600/20";
-    textStyle = "text-amber-100/90";
+    textStyle = "text-stone-300";
+    buttonLabel = "Activar Premium";
     buttonStyle = "bg-amber-600 text-white hover:bg-amber-500 border-0";
   } else if (days >= 1) {
+    message = days === 1 ? "Ultimo dia" : `${days} dias restantes`;
     bannerStyle = "bg-amber-900/80 dark:bg-amber-950/80 backdrop-blur-xl border-b border-amber-500/30";
     textStyle = "text-amber-100";
+    buttonLabel = "Activar Ahora";
     buttonStyle = "bg-amber-500 text-stone-900 hover:bg-amber-400 border-0 font-bold";
   } else {
+    message = `${hours}h restantes`;
     bannerStyle = "bg-red-900/80 dark:bg-red-950/80 backdrop-blur-xl border-b border-red-500/30 animate-pulse";
     textStyle = "text-red-100";
+    buttonLabel = "Activar Ahora";
     buttonStyle = "bg-red-500 text-white hover:bg-red-400 border-0 font-bold";
   }
 
   return (
-    <div className={`sticky top-0 z-50 ${bannerStyle} px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium shadow-sm`}>
-      <span className={textStyle}>
-        Tienes <strong>{days} {days === 1 ? "dia" : "dias"}</strong> y <strong>{hours} {hours === 1 ? "hora" : "horas"}</strong> restantes de tu prueba gratuita
-      </span>
+    <div className={`sticky top-0 z-50 ${bannerStyle} px-4 py-1.5 flex items-center justify-center gap-3 text-xs font-medium shadow-sm`}>
+      <span className={textStyle}>{message}</span>
       <Button
         size="sm"
-        className={`${buttonStyle} gap-1.5 h-7 text-xs rounded-lg shadow-sm`}
+        className={`${buttonStyle} gap-1 h-6 text-[11px] rounded-md shadow-sm px-2.5`}
         onClick={() => navigate("/membership")}
       >
         <Crown className="h-3 w-3" />
-        Actualizar Plan
+        {buttonLabel}
       </Button>
       <button
         onClick={() => setDismissed(true)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
-        aria-label="Cerrar banner"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+        aria-label="Cerrar"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3.5 w-3.5" />
       </button>
     </div>
   );
