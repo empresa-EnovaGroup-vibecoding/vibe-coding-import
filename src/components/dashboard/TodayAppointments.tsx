@@ -46,11 +46,11 @@ export function TodayAppointments() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-white/30 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-foreground mb-4">Citas de Hoy</h3>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
+            <div key={i} className="h-16 bg-white/30 dark:bg-white/5 animate-pulse rounded-lg" />
           ))}
         </div>
       </div>
@@ -58,7 +58,7 @@ export function TodayAppointments() {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-xl border border-white/30 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground">Citas de Hoy</h3>
         <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export function TodayAppointments() {
             return (
               <div
                 key={appointment.id}
-                className="flex items-center gap-4 rounded-lg border border-border bg-muted/30 p-4 transition-all hover:bg-muted/50"
+                className="flex items-center gap-4 rounded-xl border border-white/20 dark:border-white/5 bg-white/40 dark:bg-white/5 backdrop-blur-sm p-4 transition-all hover:bg-white/60 dark:hover:bg-white/10"
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                   <User className="h-5 w-5 text-primary" />

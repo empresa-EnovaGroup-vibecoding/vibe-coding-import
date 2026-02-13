@@ -24,17 +24,17 @@ export function MetricCard({
   const navigate = useNavigate();
 
   const variantStyles = {
-    default: "bg-card border-border",
-    warning: "bg-warning/10 border-warning/30",
-    success: "bg-success/10 border-success/30",
-    primary: "bg-primary/10 border-primary/30",
+    default: "bg-white/60 dark:bg-white/5 border-white/30 dark:border-white/10",
+    warning: "bg-amber-500/10 dark:bg-amber-500/5 border-amber-300/30 dark:border-amber-400/20",
+    success: "bg-emerald-500/10 dark:bg-emerald-500/5 border-emerald-300/30 dark:border-emerald-400/20",
+    primary: "bg-blue-500/10 dark:bg-blue-500/5 border-blue-300/30 dark:border-blue-400/20",
   };
 
   const iconStyles = {
-    default: "bg-muted text-muted-foreground",
-    warning: "bg-warning/20 text-warning",
-    success: "bg-success/20 text-success",
-    primary: "bg-primary/20 text-primary",
+    default: "bg-white/40 dark:bg-white/10 text-muted-foreground",
+    warning: "bg-amber-500/15 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    success: "bg-emerald-500/15 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    primary: "bg-blue-500/15 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400",
   };
 
   return (
@@ -42,7 +42,7 @@ export function MetricCard({
       onClick={href ? () => navigate(href) : undefined}
       role={href ? "link" : undefined}
       className={cn(
-        "rounded-xl border p-6 shadow-sm transition-all duration-200 hover:shadow-md animate-fade-in",
+        "rounded-xl border p-6 shadow-sm backdrop-blur-xl transition-all duration-200 hover:shadow-md animate-fade-in",
         variantStyles[variant],
         href && "cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
       )}
@@ -55,7 +55,7 @@ export function MetricCard({
             <p className="text-xs text-muted-foreground">{description}</p>
           )}
         </div>
-        <div className={cn("rounded-lg p-3", iconStyles[variant])}>
+        <div className={cn("rounded-xl p-3", iconStyles[variant])}>
           <Icon className="h-6 w-6" />
         </div>
       </div>

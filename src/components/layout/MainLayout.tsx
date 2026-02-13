@@ -62,7 +62,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   }, [tenantId, queryClient]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <TrialBanner />
       <AppSidebar />
       <main className="lg:pl-64">

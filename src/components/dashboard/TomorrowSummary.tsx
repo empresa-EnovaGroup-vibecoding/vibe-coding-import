@@ -64,14 +64,14 @@ export function TomorrowSummary() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="h-24 bg-muted animate-pulse rounded-lg" />
+      <div className="rounded-xl border border-white/30 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl p-6 shadow-sm">
+        <div className="h-24 bg-white/30 dark:bg-white/5 animate-pulse rounded-lg" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-xl border border-white/30 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl p-6 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <CalendarCheck className="h-5 w-5 text-primary" />
         <h3 className="text-lg font-semibold">Citas de Mañana</h3>
