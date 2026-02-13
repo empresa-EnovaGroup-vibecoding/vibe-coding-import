@@ -1,5 +1,6 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface MetricCardProps {
   title: string;
@@ -9,6 +10,7 @@ interface MetricCardProps {
   trend?: "up" | "down" | "neutral";
   trendValue?: string;
   variant?: "default" | "warning" | "success" | "primary";
+  href?: string;
 }
 
 export function MetricCard({
@@ -17,7 +19,10 @@ export function MetricCard({
   icon: Icon,
   description,
   variant = "default",
+  href,
 }: MetricCardProps) {
+  const navigate = useNavigate();
+
   const variantStyles = {
     default: "bg-card border-border",
     warning: "bg-warning/10 border-warning/30",
@@ -34,9 +39,12 @@ export function MetricCard({
 
   return (
     <div
+      onClick={href ? () => navigate(href) : undefined}
+      role={href ? "link" : undefined}
       className={cn(
         "rounded-xl border p-6 shadow-sm transition-all duration-200 hover:shadow-md animate-fade-in",
-        variantStyles[variant]
+        variantStyles[variant],
+        href && "cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
       )}
     >
       <div className="flex items-start justify-between">

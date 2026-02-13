@@ -131,6 +131,7 @@ export default function Dashboard() {
           icon={Calendar}
           description="Citas programadas"
           variant="primary"
+          href="/appointments"
         />
         <MetricCard
           title="Completadas Hoy"
@@ -138,6 +139,7 @@ export default function Dashboard() {
           icon={CheckCircle2}
           description="Citas terminadas"
           variant="success"
+          href="/appointments"
         />
         <MetricCard
           title="Ingresos Hoy"
@@ -145,6 +147,7 @@ export default function Dashboard() {
           icon={DollarSign}
           description="Ventas del dia"
           variant="primary"
+          href="/expenses"
         />
         <MetricCard
           title="Ingresos del Mes"
@@ -152,6 +155,7 @@ export default function Dashboard() {
           icon={ShoppingCart}
           description={new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
           variant="success"
+          href="/expenses"
         />
         <MetricCard
           title="Total Clientes"
@@ -159,6 +163,7 @@ export default function Dashboard() {
           icon={Users}
           description="Clientes registrados"
           variant="default"
+          href="/clients"
         />
         <MetricCard
           title="Stock Bajo"
@@ -166,6 +171,7 @@ export default function Dashboard() {
           icon={lowStockCount && lowStockCount > 0 ? AlertTriangle : Package}
           description="Productos con menos de 5 unidades"
           variant={lowStockCount && lowStockCount > 0 ? "warning" : "default"}
+          href="/inventory"
         />
       </div>
 
