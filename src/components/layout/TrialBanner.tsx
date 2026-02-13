@@ -27,24 +27,32 @@ export function TrialBanner() {
   const days = Math.floor(totalHours / 24);
   const hours = totalHours % 24;
 
-  let bg: string;
+  let bannerStyle: string;
+  let textStyle: string;
+  let buttonStyle: string;
+
   if (days >= 3) {
-    bg = "bg-blue-600";
+    bannerStyle = "bg-stone-900/80 dark:bg-stone-950/80 backdrop-blur-xl border-b border-amber-600/20";
+    textStyle = "text-amber-100/90";
+    buttonStyle = "bg-amber-600 text-white hover:bg-amber-500 border-0";
   } else if (days >= 1) {
-    bg = "bg-orange-500";
+    bannerStyle = "bg-amber-900/80 dark:bg-amber-950/80 backdrop-blur-xl border-b border-amber-500/30";
+    textStyle = "text-amber-100";
+    buttonStyle = "bg-amber-500 text-stone-900 hover:bg-amber-400 border-0 font-bold";
   } else {
-    bg = "bg-red-600 animate-pulse";
+    bannerStyle = "bg-red-900/80 dark:bg-red-950/80 backdrop-blur-xl border-b border-red-500/30 animate-pulse";
+    textStyle = "text-red-100";
+    buttonStyle = "bg-red-500 text-white hover:bg-red-400 border-0 font-bold";
   }
 
   return (
-    <div className={`sticky top-0 z-50 ${bg} text-white px-4 py-2.5 flex items-center justify-center gap-4 text-sm font-medium shadow-md`}>
-      <span>
+    <div className={`sticky top-0 z-50 ${bannerStyle} px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium shadow-sm`}>
+      <span className={textStyle}>
         Tienes <strong>{days} {days === 1 ? "dia" : "dias"}</strong> y <strong>{hours} {hours === 1 ? "hora" : "horas"}</strong> restantes de tu prueba gratuita
       </span>
       <Button
         size="sm"
-        variant="secondary"
-        className="bg-white text-foreground hover:bg-white/90 font-semibold gap-1.5 h-7 text-xs"
+        className={`${buttonStyle} gap-1.5 h-7 text-xs rounded-lg shadow-sm`}
         onClick={() => navigate("/membership")}
       >
         <Crown className="h-3 w-3" />
