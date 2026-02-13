@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Package, Search, Pencil, Trash2, AlertTriangle, FileUp } from "lucide-react";
+import { Plus, Package, Search, Pencil, Trash2, FileUp } from "lucide-react";
 import InventoryImportModal from "@/components/inventory/InventoryImportModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -268,6 +268,9 @@ export default function Inventory() {
 
   const isLowStock = (stockLevel: number) => stockLevel < 5;
 
+  const toTitleCase = (str: string) =>
+    str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
   return (
     <div className="space-y-6 pt-12 lg:pt-0">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -436,7 +439,7 @@ export default function Inventory() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
+                <TableRow>
                   {isOwner && (
                     <TableHead className="w-12">
                       <Checkbox
@@ -449,8 +452,8 @@ export default function Inventory() {
                   <TableHead>Producto</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Stock</TableHead>
-                  {isOwner && <TableHead className="hidden sm:table-cell">P. Costo</TableHead>}
-                  <TableHead>P. Venta</TableHead>
+                  {isOwner && <TableHead className="hidden sm:table-cell">Costo</TableHead>}
+                  <TableHead>Precio</TableHead>
                   <TableHead className="hidden md:table-cell">Proveedor</TableHead>
                   <TableHead className="w-24">Acciones</TableHead>
                 </TableRow>
@@ -469,29 +472,23 @@ export default function Inventory() {
                     )}
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "flex h-10 w-10 items-center justify-center rounded-full",
-                          isLowStock(item.stock_level) ? "bg-destructive/10" : "bg-primary/10"
-                        )}>
-                          <Package className={cn(
-                            "h-5 w-5",
-                            isLowStock(item.stock_level) ? "text-destructive" : "text-primary"
-                          )} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/8 border border-primary/15">
+                          <Package className="h-4 w-4 text-primary" />
                         </div>
-                        <span className="font-medium text-foreground">{item.name}</span>
+                        <span className="font-medium text-foreground">{toTitleCase(item.name)}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {item.sku || "-"}
+                    <TableCell className="text-muted-foreground font-mono text-xs">
+                      {item.sku || ""}
                     </TableCell>
                     <TableCell>
                       {isLowStock(item.stock_level) ? (
-                        <Badge variant="destructive" className="gap-1">
-                          <AlertTriangle className="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                           {item.stock_level}
-                        </Badge>
+                        </span>
                       ) : (
-                        <Badge variant="secondary">{item.stock_level}</Badge>
+                        <span className="text-sm text-muted-foreground">{item.stock_level}</span>
                       )}
                     </TableCell>
                     {isOwner && (
@@ -499,11 +496,11 @@ export default function Inventory() {
                         Q{Number(item.cost_price || 0).toFixed(2)}
                       </TableCell>
                     )}
-                    <TableCell className="font-medium text-foreground">
+                    <TableCell className="font-semibold text-foreground">
                       Q{Number(item.sale_price).toFixed(2)}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground">
-                      {item.supplier || "-"}
+                    <TableCell className="hidden md:table-cell text-muted-foreground/60 text-xs italic">
+                      {item.supplier || "Sin asignar"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
