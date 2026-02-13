@@ -2,11 +2,14 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WhatsAppButtonProps {
   phone: string | null;
   clientName: string;
   appointmentTime: string;
+  appointmentId?: string;
+  confirmationToken?: string | null;
   className?: string;
 }
 
@@ -14,18 +17,49 @@ export function WhatsAppButton({
   phone,
   clientName,
   appointmentTime,
+  appointmentId,
+  confirmationToken,
   className,
 }: WhatsAppButtonProps) {
   if (!phone) return null;
 
-  const handleClick = () => {
+  const handleClick = async () => {
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     const date = new Date(appointmentTime);
     const formattedDate = format(date, "EEEE d 'de' MMMM", { locale: es });
     const formattedTime = format(date, "HH:mm");
-    const message = encodeURIComponent(
-      `Hola ${clientName}, te recordamos tu cita para el ${formattedDate} a las ${formattedTime} hrs. ¡Te esperamos!`
-    );
+
+    let confirmLink = "";
+
+    if (appointmentId && !confirmationToken) {
+      const token = crypto.randomUUID();
+      await supabase
+        .from("appointments")
+        .update({
+          confirmation_token: token,
+          reminder_sent_at: new Date().toISOString(),
+        })
+        .eq("id", appointmentId);
+      confirmLink = `${window.location.origin}/confirm/${token}`;
+    } else if (confirmationToken) {
+      confirmLink = `${window.location.origin}/confirm/${confirmationToken}`;
+      if (appointmentId) {
+        await supabase
+          .from("appointments")
+          .update({ reminder_sent_at: new Date().toISOString() })
+          .eq("id", appointmentId);
+      }
+    }
+
+    let messageText = `Hola ${clientName}, te recordamos tu cita para el ${formattedDate} a las ${formattedTime} hrs.`;
+
+    if (confirmLink) {
+      messageText += `\n\nConfirma o cancela aqui:\n${confirmLink}`;
+    }
+
+    messageText += `\n\nTe esperamos!`;
+
+    const message = encodeURIComponent(messageText);
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
   };
 

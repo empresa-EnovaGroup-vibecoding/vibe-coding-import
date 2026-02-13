@@ -66,6 +66,9 @@ export type Database = {
           status: Database["public"]["Enums"]["appointment_status"]
           total_price: number | null
           updated_at: string
+          confirmation_token: string | null
+          confirmed_at: string | null
+          reminder_sent_at: string | null
         }
         Insert: {
           cabin_id?: string | null
@@ -79,6 +82,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["appointment_status"]
           total_price?: number | null
           updated_at?: string
+          confirmation_token?: string | null
+          confirmed_at?: string | null
+          reminder_sent_at?: string | null
         }
         Update: {
           cabin_id?: string | null
@@ -92,6 +98,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["appointment_status"]
           total_price?: number | null
           updated_at?: string
+          confirmation_token?: string | null
+          confirmed_at?: string | null
+          reminder_sent_at?: string | null
         }
         Relationships: [
           {
@@ -721,6 +730,19 @@ export type Database = {
         Returns: boolean
       }
       is_staff_or_admin: { Args: { _user_id: string }; Returns: boolean }
+      public_get_appointment_by_token: {
+        Args: {
+          p_token: string
+        }
+        Returns: Json
+      }
+      public_respond_appointment: {
+        Args: {
+          p_token: string
+          p_response: string
+        }
+        Returns: Json
+      }
       use_package_session: {
         Args: { p_client_package_id: string }
         Returns: boolean

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock, User } from "lucide-react";
+import { Clock, User, CheckCircle2, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WhatsAppButton } from "@/components/appointments/WhatsAppButton";
 import { BulkReminderButton } from "@/components/dashboard/BulkReminderButton";
@@ -111,10 +111,24 @@ export function TodayAppointments() {
                     phone={appointment.clients?.phone ?? null}
                     clientName={appointment.clients?.name || "Cliente"}
                     appointmentTime={appointment.start_time}
+                    appointmentId={appointment.id}
+                    confirmationToken={appointment.confirmation_token}
                   />
-                  <Badge variant="outline" className={cn("text-xs", status?.class)}>
-                    {status?.label}
-                  </Badge>
+                  {appointment.confirmed_at && appointment.status === 'confirmed' ? (
+                    <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200 gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Confirmo
+                    </Badge>
+                  ) : appointment.reminder_sent_at && !appointment.confirmed_at ? (
+                    <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-200 gap-1">
+                      <Send className="h-3 w-3" />
+                      Enviado
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className={cn("text-xs", status?.class)}>
+                      {status?.label}
+                    </Badge>
+                  )}
                 </div>
               </div>
             );

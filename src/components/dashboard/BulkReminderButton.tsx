@@ -7,14 +7,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { MessageCircle, Check } from "lucide-react";
+import { MessageCircle, Check, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Appointment {
   id: string;
   start_time: string;
   status: string;
+  confirmation_token: string | null;
+  reminder_sent_at: string | null;
   clients: { name: string; phone: string | null } | null;
   appointment_services: { id: string; services: { name: string } | null }[];
 }
@@ -36,15 +39,47 @@ export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
 
   const sentCount = remindable.filter((a) => sentIds.has(a.id)).length;
 
-  const handleSendReminder = (appointment: Appointment) => {
+  const handleSendReminder = async (appointment: Appointment) => {
     const phone = appointment.clients!.phone!;
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     const date = new Date(appointment.start_time);
     const formattedDate = format(date, "EEEE d 'de' MMMM", { locale: es });
     const formattedTime = format(date, "HH:mm");
+
+    // Generate confirmation token if not exists
+    let token = appointment.confirmation_token;
+    if (!token) {
+      token = crypto.randomUUID();
+      await supabase
+        .from("appointments")
+        .update({
+          confirmation_token: token,
+          reminder_sent_at: new Date().toISOString(),
+        })
+        .eq("id", appointment.id);
+    } else {
+      await supabase
+        .from("appointments")
+        .update({ reminder_sent_at: new Date().toISOString() })
+        .eq("id", appointment.id);
+    }
+
+    // Build confirmation link
+    const confirmLink = `${window.location.origin}/confirm/${token}`;
+
+    const serviceNames = appointment.appointment_services
+      ?.map((s) => s.services?.name)
+      .filter(Boolean)
+      .join(", ");
+
     const message = encodeURIComponent(
-      `Hola ${appointment.clients!.name}, te recordamos tu cita para el ${formattedDate} a las ${formattedTime} hrs. ¡Te esperamos!`
+      `Hola ${appointment.clients!.name}, te recordamos tu cita` +
+      (serviceNames ? ` de *${serviceNames}*` : "") +
+      ` para el ${formattedDate} a las ${formattedTime} hrs.\n\n` +
+      `Confirma o cancela aqui:\n${confirmLink}\n\n` +
+      `Te esperamos!`
     );
+
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
     setSentIds((prev) => new Set(prev).add(appointment.id));
   };
@@ -70,6 +105,7 @@ export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
         <div className="space-y-3 max-h-[60vh] overflow-y-auto">
           {remindable.map((appointment) => {
             const sent = sentIds.has(appointment.id);
+            const alreadySent = !!appointment.reminder_sent_at && !sent;
             const serviceNames = appointment.appointment_services
               ?.map((s) => s.services?.name)
               .filter(Boolean)
@@ -92,6 +128,12 @@ export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
                     {format(new Date(appointment.start_time), "HH:mm")} -{" "}
                     {serviceNames || "Sin servicio"}
                   </p>
+                  {alreadySent && (
+                    <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
+                      <Clock className="h-3 w-3" />
+                      Recordatorio previo enviado
+                    </p>
+                  )}
                 </div>
                 {sent ? (
                   <div className="flex items-center gap-1 text-green-600 text-xs font-medium shrink-0">

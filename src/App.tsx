@@ -37,6 +37,7 @@ const Expenses = lazy(() => import("./pages/Expenses"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const PublicBooking = lazy(() => import("./pages/PublicBooking"));
+const ConfirmAppointment = lazy(() => import("./pages/ConfirmAppointment"));
 const SuperAdminDashboard = lazy(() => import("./pages/super-admin/SuperAdminDashboard").then(m => ({ default: m.SuperAdminDashboard })));
 const SuperAdminTenants = lazy(() => import("./pages/super-admin/SuperAdminTenants").then(m => ({ default: m.SuperAdminTenants })));
 const SuperAdminRevenue = lazy(() => import("./pages/super-admin/SuperAdminRevenue").then(m => ({ default: m.SuperAdminRevenue })));
@@ -83,6 +84,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/invite/:token" element={<AcceptInvite />} />
               <Route path="/book/:slug" element={<PublicBooking />} />
+              <Route path="/confirm/:token" element={<ConfirmAppointment />} />
 
               {/* Onboarding - requires auth but NOT tenant */}
               <Route
