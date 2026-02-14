@@ -3,6 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Package, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -23,6 +33,7 @@ interface PackageData {
 export function PackageList() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState<PackageData | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PackageData | null>(null);
   const queryClient = useQueryClient();
 
   const { data: packages, isLoading } = useQuery({
@@ -46,9 +57,11 @@ export function PackageList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["packages"] });
       toast.success("Paquete eliminado");
+      setDeleteTarget(null);
     },
     onError: () => {
       toast.error("Error al eliminar el paquete");
+      setDeleteTarget(null);
     },
   });
 
@@ -64,16 +77,18 @@ export function PackageList() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-48 bg-muted animate-pulse rounded-xl" />
-        ))}
+      <div className="space-y-6 pt-12 lg:pt-0">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-48 bg-white/5 dark:bg-white/[0.02] backdrop-blur-sm border border-white/10 animate-pulse rounded-xl" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-12 lg:pt-0">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Paquetes</h2>
@@ -126,7 +141,7 @@ export function PackageList() {
                 {pkg.validity_days && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Validez</span>
-                    <span className="text-sm">{pkg.validity_days} días</span>
+                    <span className="text-sm">{pkg.validity_days} dias</span>
                   </div>
                 )}
                 <div className="flex gap-2 pt-2 border-t border-border">
@@ -142,7 +157,7 @@ export function PackageList() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => deleteMutation.mutate(pkg.id)}
+                    onClick={() => setDeleteTarget(pkg)}
                     disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -159,6 +174,26 @@ export function PackageList() {
         onOpenChange={handleCloseForm}
         editingPackage={editingPackage}
       />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar paquete</AlertDialogTitle>
+            <AlertDialogDescription>
+              Estas seguro de que quieres eliminar el paquete "{deleteTarget?.name}"? Esta accion no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
