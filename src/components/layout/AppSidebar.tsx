@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Calendar, Scissors, Package, Menu, X, ShoppingCart, BarChart3, LogOut, UserCog, Gift, UserCheck, DoorOpen, Crown, Settings, TrendingDown } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Scissors, Package, Menu, X, ShoppingCart, BarChart3, LogOut, UserCog, Gift, UserCheck, DoorOpen, Crown, Settings, TrendingDown, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -90,8 +90,17 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     await signOut();
-    toast.success("Sesión cerrada");
+    toast.success("Sesion cerrada");
     navigate("/auth");
+  };
+
+  const getInitials = (email: string): string => {
+    const name = email.split("@")[0];
+    const parts = name.split(/[._-]/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   };
 
   // Filter nav items: owners see everything, staff sees non-admin items
@@ -141,32 +150,40 @@ export function AppSidebar() {
           })}
           </nav>
 
-          {/* User & Logout */}
-          <div className="border-t border-amber-800/20 p-4 space-y-3 mt-4">
+          {/* User section */}
+          <div className="border-t border-amber-800/20 p-3">
             {isSuperAdmin && (
               <NavLink
                 to="/super-admin"
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium bg-red-900/50 text-red-200 hover:bg-red-900 transition-colors"
+                className="flex items-center gap-2 rounded-xl px-3 py-1.5 mb-2 text-[11px] font-medium text-amber-400/80 hover:bg-white/5 transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
-                <Crown className="h-4 w-4" />
-                Super Admin Panel
+                <Shield className="h-3.5 w-3.5" />
+                Admin
               </NavLink>
             )}
-            {user && <div className="px-3 py-2">
-                <p className="text-xs text-white/60">Conectado como</p>
-                <p className="text-sm font-medium text-white truncate">
-                  {user.email}
-                </p>
-              </div>}
-            <Button
-              variant="destructive"
-              className="w-full justify-start gap-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium mt-2"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-5 w-5" />
-              Cerrar Sesión
-            </Button>
+            {user && (
+              <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-600/20 text-amber-400 text-xs font-semibold">
+                  {getInitials(user.email ?? "")}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-white/90 truncate">
+                    {user.email?.split("@")[0]}
+                  </p>
+                  <p className="text-[11px] text-white/40 truncate">
+                    {user.email}
+                  </p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="shrink-0 rounded-lg p-1.5 text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
+                  title="Cerrar sesion"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>
