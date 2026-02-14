@@ -99,23 +99,13 @@ export default function Expenses() {
         new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
       );
 
-      // Call edge function
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-
-      const response = await fetch(
-        `https://oisqrlhwwnuilurvvvdf.supabase.co/functions/v1/extract-expense-receipt`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
-        }
+      // Call edge function via Supabase client (handles auth headers automatically)
+      const { data: result, error: fnError } = await supabase.functions.invoke(
+        "extract-expense-receipt",
+        { body: { imageBase64: base64, mimeType: file.type } }
       );
 
-      const result = await response.json();
+      if (fnError) throw fnError;
 
       if (result.success && result.data) {
         const d = result.data;
