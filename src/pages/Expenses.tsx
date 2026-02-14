@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Plus, Trash2, TrendingDown, TrendingUp, DollarSign, Calendar, ChevronLeft, ChevronRight,
+  Camera, Upload, Loader2, ImageIcon, X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -54,6 +55,8 @@ interface Expense {
   expense_date: string;
   notes: string | null;
   created_at: string;
+  receipt_url: string | null;
+  extracted_data: Record<string, unknown> | null;
 }
 
 export default function Expenses() {
@@ -74,6 +77,76 @@ export default function Expenses() {
     expense_date: new Date().toISOString().split("T")[0],
     notes: "",
   });
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleReceiptUpload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen es muy grande (max 5MB)");
+      return;
+    }
+
+    setReceiptFile(file);
+    setReceiptPreview(URL.createObjectURL(file));
+    setIsExtracting(true);
+
+    try {
+      // Convert to base64
+      const buffer = await file.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+      );
+
+      // Call edge function
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const response = await fetch(
+        `https://oisqrlhwwnuilurvvvdf.supabase.co/functions/v1/extract-expense-receipt`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        const d = result.data;
+        if (d.confidence < 0.3) {
+          toast.warning("No pude leer bien el comprobante. Revisa los datos.");
+        } else {
+          toast.success("Datos extraidos del comprobante");
+        }
+        setFormData((prev) => ({
+          ...prev,
+          description: d.description || prev.description,
+          amount: d.amount ? String(d.amount) : prev.amount,
+          category: d.category || prev.category,
+          expense_date: d.date || prev.expense_date,
+          notes: d.vendor ? `Proveedor: ${d.vendor}` : prev.notes,
+        }));
+      } else {
+        toast.error("No pude leer el comprobante. Llena los datos manual.");
+      }
+    } catch {
+      toast.error("Error al procesar la imagen");
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const clearReceipt = () => {
+    setReceiptFile(null);
+    setReceiptPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Compute date ranges for current and previous period
   const { periodStart, periodEnd, prevStart, prevEnd, periodLabel } = useMemo(() => {
@@ -160,10 +233,29 @@ export default function Expenses() {
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       if (!tenantId) throw new Error("No tenant ID");
+
+      let receiptUrl: string | null = null;
+
+      // Upload receipt image if exists
+      if (receiptFile) {
+        const ext = receiptFile.name.split(".").pop() || "jpg";
+        const path = `${tenantId}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("expense-receipts")
+          .upload(path, receiptFile, { contentType: receiptFile.type });
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from("expense-receipts")
+          .getPublicUrl(path);
+        receiptUrl = urlData.publicUrl;
+      }
+
       const { error } = await supabase.from("expenses").insert([{
         tenant_id: tenantId, description: data.description,
         amount: parseFloat(data.amount), category: data.category,
         expense_date: data.expense_date, notes: data.notes || null, created_by: user?.id,
+        receipt_url: receiptUrl,
       }]);
       if (error) throw error;
     },
@@ -172,6 +264,7 @@ export default function Expenses() {
       queryClient.invalidateQueries({ queryKey: ["financial"] });
       setIsDialogOpen(false);
       setFormData({ description: "", amount: "", category: "other", expense_date: new Date().toISOString().split("T")[0], notes: "" });
+      clearReceipt();
       toast.success("Gasto registrado");
     },
     onError: () => toast.error("Error al registrar el gasto"),
@@ -282,6 +375,70 @@ export default function Expenses() {
             <DialogContent className="sm:max-w-md">
               <DialogHeader><DialogTitle>Registrar Gasto</DialogTitle></DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Receipt Upload */}
+                <div className="space-y-2">
+                  <Label>Comprobante (opcional)</Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/heic"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleReceiptUpload(file);
+                    }}
+                  />
+                  {receiptPreview ? (
+                    <div className="relative rounded-xl border border-border overflow-hidden">
+                      <img src={receiptPreview} alt="Comprobante" className="w-full h-40 object-cover" />
+                      {isExtracting && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <div className="flex items-center gap-2 text-white text-sm">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            Leyendo comprobante...
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={clearReceipt}
+                        className="absolute top-2 right-2 rounded-full bg-black/60 p-1 text-white hover:bg-black/80 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1 gap-2"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Camera className="h-4 w-4" />
+                        Tomar Foto
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1 gap-2"
+                        onClick={() => {
+                          if (fileInputRef.current) {
+                            fileInputRef.current.removeAttribute("capture");
+                            fileInputRef.current.click();
+                            fileInputRef.current.setAttribute("capture", "environment");
+                          }
+                        }}
+                      >
+                        <Upload className="h-4 w-4" />
+                        Subir Imagen
+                      </Button>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">La IA leera el comprobante y llenara los datos automaticamente</p>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="description">Descripcion *</Label>
                   <Input id="description" value={formData.description}
@@ -432,9 +589,17 @@ export default function Expenses() {
                         {format(new Date(expense.expense_date + "T12:00:00"), "d MMM", { locale: es })}
                       </TableCell>
                       <TableCell>
-                        <div>
-                          <p className="font-medium text-foreground">{expense.description}</p>
-                          {expense.notes && <p className="text-xs text-muted-foreground truncate max-w-[200px]">{expense.notes}</p>}
+                        <div className="flex items-start gap-2">
+                          <div>
+                            <p className="font-medium text-foreground">{expense.description}</p>
+                            {expense.notes && <p className="text-xs text-muted-foreground truncate max-w-[200px]">{expense.notes}</p>}
+                          </div>
+                          {expense.receipt_url && (
+                            <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
+                              className="shrink-0 mt-0.5" title="Ver comprobante">
+                              <ImageIcon className="h-4 w-4 text-primary/60 hover:text-primary transition-colors" />
+                            </a>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
