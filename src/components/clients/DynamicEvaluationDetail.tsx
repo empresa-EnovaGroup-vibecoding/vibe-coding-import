@@ -121,7 +121,11 @@ export default function DynamicEvaluationDetail({
         return [];
       }
 
-      return data as ProductRecommendation[];
+      return (data || []).map((d: any) => ({
+        product_id: d.product_id,
+        notes: d.notes,
+        inventory: Array.isArray(d.inventory) ? d.inventory[0] ?? null : d.inventory ?? null,
+      })) as ProductRecommendation[];
     },
     enabled: !!evaluation,
   });
@@ -305,7 +309,7 @@ export default function DynamicEvaluationDetail({
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <FormIcon className="h-6 w-6" style={{ color: formDef.color }} />
+            <FormIcon className="h-6 w-6 text-primary" />
             <h2 className="text-2xl font-bold">Evaluacion {formDef.label}</h2>
             <Badge
               variant="outline"
@@ -442,10 +446,10 @@ export default function DynamicEvaluationDetail({
                       </p>
                     )}
                   </div>
-                  {product.inventory?.sale_price !== null && (
+                  {product.inventory?.sale_price != null && (
                     <p className="text-sm font-semibold text-primary ml-4">
                       $
-                      {Number(product.inventory.sale_price).toLocaleString(
+                      {Number(product.inventory!.sale_price).toLocaleString(
                         "es-AR"
                       )}
                     </p>
