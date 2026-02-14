@@ -38,16 +38,16 @@ export function TrialBanner() {
 
   if (days >= 3) {
     message = `${days} dias restantes`;
-    bannerStyle = "bg-stone-900/80 dark:bg-stone-950/80 backdrop-blur-xl border-b border-amber-600/20";
-    textStyle = "text-stone-300";
+    bannerStyle = "bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-emerald-600/20";
+    textStyle = "text-slate-300";
     buttonLabel = "Activar Premium";
-    buttonStyle = "bg-amber-600 text-white hover:bg-amber-500 border-0";
+    buttonStyle = "bg-emerald-600 text-white hover:bg-emerald-500 border-0";
   } else if (days >= 1) {
     message = days === 1 ? "Ultimo dia" : `${days} dias restantes`;
     bannerStyle = "bg-amber-900/80 dark:bg-amber-950/80 backdrop-blur-xl border-b border-amber-500/30";
     textStyle = "text-amber-100";
     buttonLabel = "Activar Ahora";
-    buttonStyle = "bg-amber-500 text-stone-900 hover:bg-amber-400 border-0 font-bold";
+    buttonStyle = "bg-amber-500 text-slate-900 hover:bg-amber-400 border-0 font-bold";
   } else {
     message = `${hours}h restantes`;
     bannerStyle = "bg-red-900/80 dark:bg-red-950/80 backdrop-blur-xl border-b border-red-500/30 animate-pulse";

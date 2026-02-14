@@ -26,10 +26,10 @@ export function MetricCard({
   const cardStyle = "bg-white/60 dark:bg-white/5 border-white/30 dark:border-white/10";
 
   const iconStyles = {
-    default: "bg-stone-100 dark:bg-white/10 text-stone-500 dark:text-stone-400",
+    default: "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400",
     warning: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
     success: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    primary: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    primary: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   };
 
   return (

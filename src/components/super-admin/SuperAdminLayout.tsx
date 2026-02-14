@@ -81,7 +81,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen w-64 bg-stone-900/95 dark:bg-stone-950/90 backdrop-blur-2xl border-r border-red-900/20 transition-transform duration-300 lg:translate-x-0",
+          "fixed left-0 top-0 z-40 h-screen w-64 bg-slate-900/95 dark:bg-slate-950/90 backdrop-blur-2xl border-r border-red-900/20 transition-transform duration-300 lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -122,10 +122,10 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     isActive
                       ? "bg-red-600/15 text-red-200 shadow-sm"
-                      : "text-stone-300 hover:bg-white/5 hover:text-white"
+                      : "text-slate-300 hover:bg-white/5 hover:text-white"
                   )}
                 >
-                  <item.icon className={cn("h-5 w-5", isActive ? "text-red-400" : "text-stone-400")} />
+                  <item.icon className={cn("h-5 w-5", isActive ? "text-red-400" : "text-slate-400")} />
                   <span>{item.title}</span>
                   {isActive && (
                     <div className="ml-auto h-1.5 w-1.5 rounded-full bg-red-400" />
@@ -167,7 +167,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       <div className="lg:pl-64">
         <div className="min-h-screen bg-background">
           {/* Header */}
-          <header className="sticky top-0 z-30 border-b border-white/10 bg-white/60 dark:bg-stone-900/60 backdrop-blur-xl">
+          <header className="sticky top-0 z-30 border-b border-white/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
             <div className="flex h-14 items-center gap-3 px-6">
               <Shield className="h-4 w-4 text-red-500/70" />
               <h2 className="text-sm font-medium text-muted-foreground">Super Admin</h2>
