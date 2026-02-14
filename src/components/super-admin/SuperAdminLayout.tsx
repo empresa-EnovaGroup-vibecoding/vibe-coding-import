@@ -122,10 +122,10 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     isActive
                       ? "bg-red-50 dark:bg-red-600/15 text-red-600 dark:text-red-300 shadow-sm"
-                      : "text-neutral-500 hover:bg-black/[0.04] hover:text-foreground"
+                      : "text-neutral-700 hover:bg-black/[0.04] hover:text-foreground"
                   )}
                 >
-                  <item.icon className={cn("h-5 w-5", isActive ? "text-red-500 dark:text-red-400" : "text-neutral-400")} />
+                  <item.icon className={cn("h-5 w-5", isActive ? "text-red-500 dark:text-red-400" : "text-neutral-500")} />
                   <span>{item.title}</span>
                   {isActive && (
                     <div className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500 dark:bg-red-400" />

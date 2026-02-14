@@ -142,8 +142,8 @@ export function AppSidebar() {
           <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
           {filteredNavItems.map(item => {
             const isActive = location.pathname === item.path;
-            return <NavLink key={item.path} to={item.path} onClick={() => setMobileOpen(false)} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-primary/10 text-primary shadow-sm" : "text-neutral-500 hover:bg-black/[0.04] hover:text-foreground")}>
-                  <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-neutral-400")} />
+            return <NavLink key={item.path} to={item.path} onClick={() => setMobileOpen(false)} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-primary/10 text-primary shadow-sm" : "text-neutral-700 hover:bg-black/[0.04] hover:text-foreground")}>
+                  <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-neutral-500")} />
                   <span>{item.title}</span>
                   {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
                 </NavLink>;
