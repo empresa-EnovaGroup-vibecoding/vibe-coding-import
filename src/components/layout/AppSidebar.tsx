@@ -7,15 +7,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
 import { toast } from "sonner";
 
-const navItems = [{
+// Daily use items (visible to all)
+const dailyItems = [{
   title: "Dashboard",
   path: "/",
   icon: LayoutDashboard,
-  adminOnly: false
-}, {
-  title: "Clientes",
-  path: "/clients",
-  icon: Users,
   adminOnly: false
 }, {
   title: "Agenda",
@@ -23,19 +19,37 @@ const navItems = [{
   icon: Calendar,
   adminOnly: false
 }, {
-  title: "Servicios",
-  path: "/services",
-  icon: Scissors,
-  adminOnly: false
-}, {
-  title: "Inventario",
-  path: "/inventory",
-  icon: Package,
+  title: "Clientes",
+  path: "/clients",
+  icon: Users,
   adminOnly: false
 }, {
   title: "Punto de Venta",
   path: "/pos",
   icon: ShoppingCart,
+  adminOnly: false
+}, {
+  title: "Servicios",
+  path: "/services",
+  icon: Scissors,
+  adminOnly: false
+}];
+
+// Management items (mixed visibility)
+const managementItems = [{
+  title: "Reportes",
+  path: "/reports",
+  icon: BarChart3,
+  adminOnly: false
+}, {
+  title: "Gastos",
+  path: "/expenses",
+  icon: TrendingDown,
+  adminOnly: true
+}, {
+  title: "Inventario",
+  path: "/inventory",
+  icon: Package,
   adminOnly: false
 }, {
   title: "Paquetes",
@@ -51,16 +65,6 @@ const navItems = [{
   title: "Cabinas",
   path: "/cabins",
   icon: DoorOpen,
-  adminOnly: true
-}, {
-  title: "Reportes",
-  path: "/reports",
-  icon: BarChart3,
-  adminOnly: false
-}, {
-  title: "Gastos",
-  path: "/expenses",
-  icon: TrendingDown,
   adminOnly: true
 }, {
   title: "Usuarios",
@@ -104,7 +108,8 @@ export function AppSidebar() {
   };
 
   // Filter nav items: owners see everything, staff sees non-admin items
-  const filteredNavItems = navItems.filter(item => !item.adminOnly || isOwner);
+  const filteredDaily = dailyItems.filter(item => !item.adminOnly || isOwner);
+  const filteredManagement = managementItems.filter(item => !item.adminOnly || isOwner);
 
   return <>
       {/* Mobile menu button */}
@@ -139,15 +144,35 @@ export function AppSidebar() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
-          {filteredNavItems.map(item => {
-            const isActive = location.pathname === item.path;
-            return <NavLink key={item.path} to={item.path} onClick={() => setMobileOpen(false)} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-primary/10 text-primary shadow-sm" : "text-neutral-700 hover:bg-black/[0.04] hover:text-foreground")}>
+          <nav className="flex-1 p-4 overflow-y-auto">
+            {/* Daily use */}
+            <div className="space-y-1">
+              {filteredDaily.map(item => {
+                const isActive = location.pathname === item.path;
+                return <NavLink key={item.path} to={item.path} onClick={() => setMobileOpen(false)} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-primary/10 text-primary shadow-sm" : "text-neutral-700 hover:bg-black/[0.04] hover:text-foreground")}>
                   <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-neutral-500")} />
                   <span>{item.title}</span>
                   {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
                 </NavLink>;
-          })}
+              })}
+            </div>
+
+            {/* Separator */}
+            {filteredManagement.length > 0 && (
+              <div className="my-3 mx-3 border-t border-black/[0.06] dark:border-white/10" />
+            )}
+
+            {/* Management */}
+            <div className="space-y-1">
+              {filteredManagement.map(item => {
+                const isActive = location.pathname === item.path;
+                return <NavLink key={item.path} to={item.path} onClick={() => setMobileOpen(false)} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-primary/10 text-primary shadow-sm" : "text-neutral-700 hover:bg-black/[0.04] hover:text-foreground")}>
+                  <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-neutral-500")} />
+                  <span>{item.title}</span>
+                  {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
+                </NavLink>;
+              })}
+            </div>
           </nav>
 
           {/* User section */}
