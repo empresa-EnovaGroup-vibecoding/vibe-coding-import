@@ -236,13 +236,9 @@ export default function Expenses() {
   }
 
   return (
-    <div className="space-y-6 pt-12 lg:pt-0">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Gastos</h1>
-          <p className="text-muted-foreground mt-1">Controla los ingresos y gastos de tu negocio</p>
-        </div>
+    <div className="space-y-6">
+      {/* Controls */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
         <div className="flex flex-wrap gap-3 items-center">
           {/* Period Toggle */}
           <div className="flex rounded-lg border border-border overflow-hidden">

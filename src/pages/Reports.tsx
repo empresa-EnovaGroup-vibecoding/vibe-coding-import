@@ -1,3 +1,4 @@
+import { useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,10 +17,13 @@ import {
   Line,
   Legend,
 } from "recharts";
-import { TrendingUp, TrendingDown, Users, Scissors, DollarSign, Calendar, CreditCard, Banknote, ArrowLeftRight, Tag } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, Scissors, DollarSign, Calendar, CreditCard, Banknote, ArrowLeftRight, Tag, BarChart3, Receipt } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { useTenant } from "@/hooks/useTenant";
+import { cn } from "@/lib/utils";
+
+const Expenses = lazy(() => import("./Expenses"));
 
 const COLORS = [
   "hsl(221, 83%, 53%)",
@@ -277,13 +281,50 @@ export default function Reports() {
   });
 
   const totalRevenue = monthlyRevenue?.reduce((sum, m) => sum + m.total, 0) || 0;
+  const [activeTab, setActiveTab] = useState<"reportes" | "gastos">("reportes");
 
   return (
     <div className="space-y-6 pt-12 lg:pt-0">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Reportes</h1>
-        <p className="text-muted-foreground mt-1">Estadísticas y análisis de tu negocio</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Finanzas</h1>
+        <p className="text-muted-foreground mt-1">Estadisticas, reportes y gastos de tu negocio</p>
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-xl bg-neutral-100 dark:bg-white/5 p-1 w-fit">
+        <button
+          onClick={() => setActiveTab("reportes")}
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+            activeTab === "reportes"
+              ? "bg-white dark:bg-neutral-800 text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <BarChart3 className="h-4 w-4" />
+          Reportes
+        </button>
+        <button
+          onClick={() => setActiveTab("gastos")}
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+            activeTab === "gastos"
+              ? "bg-white dark:bg-neutral-800 text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Receipt className="h-4 w-4" />
+          Gastos
+        </button>
+      </div>
+
+      {activeTab === "gastos" ? (
+        <Suspense fallback={<div className="h-64 bg-muted animate-pulse rounded-xl" />}>
+          <Expenses />
+        </Suspense>
+      ) : (
+      <>
+      {/* === REPORTES TAB === */}
 
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -640,6 +681,8 @@ export default function Reports() {
             </div>
           </CardContent>
         </Card>
+      )}
+      </>
       )}
     </div>
   );
