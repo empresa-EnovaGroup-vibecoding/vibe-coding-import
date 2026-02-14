@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Calendar, Scissors, Package, Menu, X, ShoppingCart, BarChart3, LogOut, UserCog, Gift, UserCheck, DoorOpen, Crown, Settings, TrendingDown, Shield } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Scissors, Package, Menu, X, ShoppingCart, Wallet, LogOut, UserCog, Gift, UserCheck, DoorOpen, Crown, Settings, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -37,15 +37,10 @@ const dailyItems = [{
 
 // Management items (mixed visibility)
 const managementItems = [{
-  title: "Reportes",
+  title: "Finanzas",
   path: "/reports",
-  icon: BarChart3,
+  icon: Wallet,
   adminOnly: false
-}, {
-  title: "Gastos",
-  path: "/expenses",
-  icon: TrendingDown,
-  adminOnly: true
 }, {
   title: "Inventario",
   path: "/inventory",
