@@ -19,7 +19,7 @@
 @layer base {
   :root {
     /* Apple Light + Blooms Coral Palette */
-    --background: 0 0% 97%;
+    --background: 0 0% 98%;
     --foreground: 0 0% 12%;
 
     /* Cards & Surfaces - Pure White */
@@ -176,7 +176,7 @@
   body {
     @apply text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background: hsl(0 0% 96%);
+    background: hsl(0 0% 98%);
     background-attachment: fixed;
     min-height: 100vh;
   }
