@@ -69,8 +69,8 @@ export default function Membership() {
       </div>
 
       {isSuccess && (
-        <div className="mb-6 p-4 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 text-center">
-          <p className="text-green-700 dark:text-green-300 font-medium">
+        <div className="mb-6 p-4 rounded-lg bg-primary/5 border border-primary/20 text-center">
+          <p className="text-primary font-medium">
             Tu plan ha sido activado exitosamente.
           </p>
         </div>
@@ -78,10 +78,10 @@ export default function Membership() {
 
       {/* Active subscription card */}
       {subscriptionStatus === "active" && (
-        <Card className="mb-8 border-green-200 dark:border-green-800">
+        <Card className="mb-8 border-primary">
           <CardContent className="flex items-center justify-between p-6">
             <div className="flex items-center gap-3">
-              <Crown className="h-8 w-8 text-green-600" />
+              <Crown className="h-8 w-8 text-primary" />
               <div>
                 <p className="font-semibold text-lg">Plan Activo</p>
                 <p className="text-sm text-muted-foreground">
@@ -89,7 +89,7 @@ export default function Membership() {
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="border-green-500 text-green-600">
+            <Badge variant="outline" className="border-primary text-primary">
               <Check className="h-3 w-3 mr-1" />
               Activo
             </Badge>
@@ -114,7 +114,7 @@ export default function Membership() {
               <ul className="space-y-2">
                 {features.map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-600 shrink-0" />
+                    <Check className="h-4 w-4 text-primary shrink-0" />
                     {feature}
                   </li>
                 ))}
@@ -145,7 +145,7 @@ export default function Membership() {
               <ul className="space-y-2">
                 {features.map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-600 shrink-0" />
+                    <Check className="h-4 w-4 text-primary shrink-0" />
                     {feature}
                   </li>
                 ))}
@@ -173,7 +173,7 @@ export default function Membership() {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-600 shrink-0" />
+                    <Check className="h-4 w-4 text-primary shrink-0" />
                     <span className="font-medium text-foreground">{benefit.title}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-0.5">

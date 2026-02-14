@@ -173,7 +173,7 @@ export default function Onboarding() {
                   {checkingSlug ? (
                     <span className="text-muted-foreground">Verificando disponibilidad...</span>
                   ) : slugAvailable === true ? (
-                    <span className="text-green-600 flex items-center gap-1">
+                    <span className="text-primary flex items-center gap-1">
                       <CheckCircle className="h-3 w-3" />
                       URL disponible: {currentSlug}
                     </span>

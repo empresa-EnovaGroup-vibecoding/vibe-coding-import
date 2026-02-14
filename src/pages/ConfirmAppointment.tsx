@@ -170,10 +170,10 @@ export default function ConfirmAppointment() {
         <Card className="max-w-md w-full">
           <CardContent className="pt-8 pb-6 text-center space-y-6">
             <div className="relative">
-              <div className="h-20 w-20 mx-auto rounded-full bg-green-100 flex items-center justify-center animate-pulse">
-                <CheckCircle2 className="h-10 w-10 text-green-600" />
+              <div className="h-20 w-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+                <CheckCircle2 className="h-10 w-10 text-primary" />
               </div>
-              <Sparkles className="h-6 w-6 text-green-500 absolute top-0 right-1/3 animate-bounce" />
+              <Sparkles className="h-6 w-6 text-primary absolute top-0 right-1/3 animate-bounce" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Tu cita esta confirmada</h2>
@@ -183,7 +183,7 @@ export default function ConfirmAppointment() {
                 {format(new Date(appointment.start_time), "HH:mm")}
               </p>
             </div>
-            <div className="bg-green-50 rounded-lg p-4 text-left space-y-2 text-sm">
+            <div className="bg-primary/5 rounded-lg p-4 text-left space-y-2 text-sm">
               <p>
                 <span className="text-gray-500">Servicio:</span>{" "}
                 <span className="font-medium text-gray-900">{appointment.service_names}</span>
@@ -343,7 +343,7 @@ export default function ConfirmAppointment() {
         {/* Action Buttons */}
         <div className="space-y-3">
           <Button
-            className="w-full h-14 text-lg font-semibold bg-green-600 hover:bg-green-700 text-white shadow-lg transition-all transform active:scale-95"
+            className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg transition-all transform active:scale-95"
             onClick={() => handleResponse('confirm')}
             disabled={responseStatus === 'confirming' || responseStatus === 'cancelling'}
           >

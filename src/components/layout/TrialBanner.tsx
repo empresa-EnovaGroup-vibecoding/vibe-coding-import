@@ -47,7 +47,7 @@ export function TrialBanner() {
     bannerStyle = "bg-amber-900/80 dark:bg-amber-950/80 backdrop-blur-xl border-b border-amber-500/30";
     textStyle = "text-amber-100";
     buttonLabel = "Activar Ahora";
-    buttonStyle = "bg-amber-500 text-slate-900 hover:bg-amber-400 border-0 font-bold";
+    buttonStyle = "bg-amber-500 text-neutral-900 hover:bg-amber-400 border-0 font-bold";
   } else {
     message = `${hours}h restantes`;
     bannerStyle = "bg-red-900/80 dark:bg-red-950/80 backdrop-blur-xl border-b border-red-500/30 animate-pulse";

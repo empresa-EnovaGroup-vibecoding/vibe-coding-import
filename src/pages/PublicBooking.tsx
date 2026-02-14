@@ -279,13 +279,13 @@ export default function PublicBooking() {
                     s === step
                       ? "bg-blue-600 text-white"
                       : s < step
-                        ? "bg-green-500 text-white"
+                        ? "bg-primary text-white"
                         : "bg-gray-200 text-gray-500"
                   }`}
                 >
                   {s < step ? "\u2713" : s}
                 </div>
-                {s < 3 && <div className={`h-0.5 w-8 ${s < step ? "bg-green-500" : "bg-gray-200"}`} />}
+                {s < 3 && <div className={`h-0.5 w-8 ${s < step ? "bg-primary" : "bg-gray-200"}`} />}
               </div>
             ))}
             <span className="ml-2 text-xs">
@@ -546,8 +546,8 @@ export default function PublicBooking() {
         {/* Step 4: Success */}
         {step === 4 && bookingResult && (
           <div className="text-center space-y-6 py-8">
-            <div className="h-20 w-20 mx-auto rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="h-10 w-10 text-green-600" />
+            <div className="h-20 w-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+              <CheckCircle2 className="h-10 w-10 text-primary" />
             </div>
 
             <div>
@@ -587,7 +587,7 @@ export default function PublicBooking() {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors"
               >
                 <Phone className="h-5 w-5" />
                 Contactar por WhatsApp
