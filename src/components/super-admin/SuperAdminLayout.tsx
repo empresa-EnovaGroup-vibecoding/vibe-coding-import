@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Building2, DollarSign, LogOut, Menu, X, Shield } from "lucide-react";
+import { LayoutDashboard, Building2, DollarSign, LogOut, Menu, X, Shield, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -40,13 +40,22 @@ const navItems = [
 export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
-    toast.success("Sesión cerrada");
+    toast.success("Sesion cerrada");
     navigate("/auth");
+  };
+
+  const getInitials = (email: string): string => {
+    const name = email.split("@")[0];
+    const parts = name.split(/[._-]/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   };
 
   return (
@@ -72,20 +81,32 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen w-64 bg-red-950 dark:bg-red-950 transition-transform duration-300 lg:translate-x-0",
+          "fixed left-0 top-0 z-40 h-screen w-64 bg-stone-900/95 dark:bg-stone-950/90 backdrop-blur-2xl border-r border-red-900/20 transition-transform duration-300 lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex h-full flex-col">
-          {/* Logo / Brand */}
-          <div className="flex h-16 items-center gap-3 border-b border-red-900 px-6">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-800">
-              <Shield className="h-5 w-5 text-white" />
+          {/* Header */}
+          <div className="flex h-16 items-center gap-3 border-b border-red-800/20 px-6">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-600/15">
+              <Shield className="h-5 w-5 text-red-400" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-white">Super Admin Panel</h1>
-              <p className="text-xs text-red-200">Control total de la plataforma</p>
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold text-white truncate">Super Admin</h1>
+              <p className="text-[11px] text-white/40">Control de plataforma</p>
             </div>
+          </div>
+
+          {/* Back to app */}
+          <div className="px-4 pt-3">
+            <NavLink
+              to="/"
+              className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors"
+              onClick={() => setMobileOpen(false)}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Volver a la app
+            </NavLink>
           </div>
 
           {/* Navigation */}
@@ -98,35 +119,46 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                   to={item.path}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-red-800 text-white"
-                      : "text-red-100 hover:bg-red-900/50 hover:text-white"
+                      ? "bg-red-600/15 text-red-200 shadow-sm"
+                      : "text-stone-300 hover:bg-white/5 hover:text-white"
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className={cn("h-5 w-5", isActive ? "text-red-400" : "text-stone-400")} />
                   <span>{item.title}</span>
                   {isActive && (
-                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white" />
+                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-red-400" />
                   )}
                 </NavLink>
               );
             })}
           </nav>
 
-          {/* Logout */}
-          <div className="border-t border-red-900 p-4">
-            <Button
-              variant="destructive"
-              className="w-full justify-start gap-3 bg-red-800 hover:bg-red-700 text-white font-medium"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-5 w-5" />
-              Cerrar Sesión
-            </Button>
-            <p className="text-xs text-red-200 text-center mt-3">
-              Modo Super Administrador
-            </p>
+          {/* User section */}
+          <div className="border-t border-red-800/20 p-3">
+            {user && (
+              <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-600/15 text-red-400 text-xs font-semibold">
+                  {getInitials(user.email ?? "")}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-white/90 truncate">
+                    {user.email?.split("@")[0]}
+                  </p>
+                  <p className="text-[11px] text-white/40 truncate">
+                    Super Admin
+                  </p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="shrink-0 rounded-lg p-1.5 text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
+                  title="Cerrar sesion"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>
@@ -135,12 +167,10 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       <div className="lg:pl-64">
         <div className="min-h-screen bg-background">
           {/* Header */}
-          <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-            <div className="flex h-16 items-center gap-4 px-6">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-red-600" />
-                <h2 className="text-lg font-semibold">Super Admin Panel</h2>
-              </div>
+          <header className="sticky top-0 z-30 border-b border-white/10 bg-white/60 dark:bg-stone-900/60 backdrop-blur-xl">
+            <div className="flex h-14 items-center gap-3 px-6">
+              <Shield className="h-4 w-4 text-red-500/70" />
+              <h2 className="text-sm font-medium text-muted-foreground">Super Admin</h2>
             </div>
           </header>
 
