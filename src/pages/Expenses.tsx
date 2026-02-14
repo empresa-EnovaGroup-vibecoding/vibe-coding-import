@@ -82,9 +82,36 @@ export default function Expenses() {
   const [isExtracting, setIsExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Compress image to fit edge function body limit (~1MB max)
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX = 1024;
+        let w = img.width;
+        let h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round((h * MAX) / w); w = MAX; }
+          else { w = Math.round((w * MAX) / h); h = MAX; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("No canvas")); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+        // Remove "data:image/jpeg;base64," prefix
+        resolve(dataUrl.split(",")[1]);
+      };
+      img.onerror = () => reject(new Error("No se pudo cargar la imagen"));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleReceiptUpload = async (file: File) => {
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("La imagen es muy grande (max 5MB)");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("La imagen es muy grande (max 10MB)");
       return;
     }
 
@@ -93,13 +120,10 @@ export default function Expenses() {
     setIsExtracting(true);
 
     try {
-      // Convert to base64
-      const buffer = await file.arrayBuffer();
-      const base64 = btoa(
-        new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
-      );
+      // Compress image to base64 (max 1024px, JPEG 60%)
+      const base64 = await compressImage(file);
 
-      // Call edge function directly
+      // Call edge function
       const res = await fetch(
         "https://oisqrlhwwnuilurvvvdf.supabase.co/functions/v1/extract-expense-receipt",
         {
@@ -108,7 +132,7 @@ export default function Expenses() {
             "Content-Type": "application/json",
             apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pc3FybGh3d251aWx1cnZ2dmRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NzA5MzAsImV4cCI6MjA4NTA0NjkzMH0.LaPbqMZt3lAaqTIdA_a8fnFvWM_ez_axXV-C-MppbBM",
           },
-          body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+          body: JSON.stringify({ imageBase64: base64, mimeType: "image/jpeg" }),
         }
       );
       const result = await res.json();
@@ -129,10 +153,10 @@ export default function Expenses() {
           notes: d.vendor ? `Proveedor: ${d.vendor}` : prev.notes,
         }));
       } else {
-        toast.error("No pude leer el comprobante. Llena los datos manual.");
+        toast.error(result.error || "No pude leer el comprobante. Llena los datos manual.");
       }
-    } catch {
-      toast.error("Error al procesar la imagen");
+    } catch (err) {
+      toast.error("Error: " + (err instanceof Error ? err.message : "al procesar la imagen"));
     } finally {
       setIsExtracting(false);
     }
