@@ -23,18 +23,13 @@ export function MetricCard({
 }: MetricCardProps) {
   const navigate = useNavigate();
 
-  const variantStyles = {
-    default: "bg-white/60 dark:bg-white/5 border-white/30 dark:border-white/10",
-    warning: "bg-amber-500/10 dark:bg-amber-500/5 border-amber-300/30 dark:border-amber-400/20",
-    success: "bg-emerald-500/10 dark:bg-emerald-500/5 border-emerald-300/30 dark:border-emerald-400/20",
-    primary: "bg-amber-500/10 dark:bg-amber-500/5 border-amber-300/30 dark:border-amber-400/20",
-  };
+  const cardStyle = "bg-white/60 dark:bg-white/5 border-white/30 dark:border-white/10";
 
   const iconStyles = {
-    default: "bg-white/40 dark:bg-white/10 text-muted-foreground",
-    warning: "bg-amber-500/15 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    success: "bg-emerald-500/15 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    primary: "bg-amber-500/15 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    default: "bg-stone-100 dark:bg-white/10 text-stone-500 dark:text-stone-400",
+    warning: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    success: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    primary: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
   };
 
   return (
@@ -43,7 +38,7 @@ export function MetricCard({
       role={href ? "link" : undefined}
       className={cn(
         "rounded-xl border p-6 shadow-sm backdrop-blur-xl transition-all duration-200 hover:shadow-md animate-fade-in",
-        variantStyles[variant],
+        cardStyle,
         href && "cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
       )}
     >
