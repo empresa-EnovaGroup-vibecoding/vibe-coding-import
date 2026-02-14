@@ -109,6 +109,27 @@ export default function Expenses() {
     });
   };
 
+  const callExtractFunction = async (base64: string, attempt = 1): Promise<Record<string, unknown> | null> => {
+    const res = await fetch(
+      "https://oisqrlhwwnuilurvvvdf.supabase.co/functions/v1/extract-expense-receipt",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pc3FybGh3d251aWx1cnZ2dmRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NzA5MzAsImV4cCI6MjA4NTA0NjkzMH0.LaPbqMZt3lAaqTIdA_a8fnFvWM_ez_axXV-C-MppbBM",
+        },
+        body: JSON.stringify({ imageBase64: base64, mimeType: "image/jpeg" }),
+      }
+    );
+    const json = await res.json();
+    // Retry once on rate limit (429)
+    if (json?.error?.includes?.("429") && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 2000 * attempt));
+      return callExtractFunction(base64, attempt + 1);
+    }
+    return json;
+  };
+
   const handleReceiptUpload = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
       toast.error("La imagen es muy grande (max 10MB)");
@@ -120,51 +141,30 @@ export default function Expenses() {
     setIsExtracting(true);
 
     try {
-      // Compress image to base64 (max 1024px, JPEG 60%)
       const base64 = await compressImage(file);
+      const result = await callExtractFunction(base64);
 
-      // Call edge function
-      const res = await fetch(
-        "https://oisqrlhwwnuilurvvvdf.supabase.co/functions/v1/extract-expense-receipt",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pc3FybGh3d251aWx1cnZ2dmRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NzA5MzAsImV4cCI6MjA4NTA0NjkzMH0.LaPbqMZt3lAaqTIdA_a8fnFvWM_ez_axXV-C-MppbBM",
-          },
-          body: JSON.stringify({ imageBase64: base64, mimeType: "image/jpeg" }),
-        }
-      );
-      if (res.status === 429 || res.status === 400) {
-        const body = await res.json().catch(() => ({}));
-        if (res.status === 429 || body?.error?.includes("429")) {
-          toast.error("La API está saturada. Intenta de nuevo en unos segundos.", { duration: 5000 });
-          return;
-        }
-      }
-
-      const result = await res.json().catch(() => ({ success: false }));
-
-      if (result.success && result.data) {
-        const d = result.data;
-        if (d.confidence < 0.3) {
+      if (result?.success && result?.data) {
+        const d = result.data as Record<string, unknown>;
+        const confidence = typeof d.confidence === "number" ? d.confidence : 0;
+        if (confidence < 0.3) {
           toast.warning("No pude leer bien el comprobante. Revisa los datos.");
         } else {
           toast.success("Datos extraidos del comprobante");
         }
         setFormData((prev) => ({
           ...prev,
-          description: d.description || prev.description,
+          description: (d.description as string) || prev.description,
           amount: d.amount ? String(d.amount) : prev.amount,
-          category: d.category || prev.category,
-          expense_date: d.date || prev.expense_date,
+          category: (d.category as string) || prev.category,
+          expense_date: (d.date as string) || prev.expense_date,
           notes: d.vendor ? `Proveedor: ${d.vendor}` : prev.notes,
         }));
       } else {
-        toast.error(result.error || "No pude leer el comprobante. Llena los datos manual.");
+        toast.info("No se pudo leer automaticamente. Llena los datos manual.");
       }
-    } catch (err) {
-      toast.error("Error: " + (err instanceof Error ? err.message : "al procesar la imagen"));
+    } catch {
+      toast.info("No se pudo procesar la imagen. Llena los datos manual.");
     } finally {
       setIsExtracting(false);
     }
