@@ -99,13 +99,19 @@ export default function Expenses() {
         new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
       );
 
-      // Call edge function via Supabase client (handles auth headers automatically)
-      const { data: result, error: fnError } = await supabase.functions.invoke(
-        "extract-expense-receipt",
-        { body: { imageBase64: base64, mimeType: file.type } }
+      // Call edge function directly
+      const res = await fetch(
+        "https://oisqrlhwwnuilurvvvdf.supabase.co/functions/v1/extract-expense-receipt",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pc3FybGh3d251aWx1cnZ2dmRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NzA5MzAsImV4cCI6MjA4NTA0NjkzMH0.LaPbqMZt3lAaqTIdA_a8fnFvWM_ez_axXV-C-MppbBM",
+          },
+          body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+        }
       );
-
-      if (fnError) throw fnError;
+      const result = await res.json();
 
       if (result.success && result.data) {
         const d = result.data;
