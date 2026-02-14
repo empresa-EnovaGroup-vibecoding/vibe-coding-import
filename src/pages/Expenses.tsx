@@ -161,7 +161,10 @@ export default function Expenses() {
           notes: d.vendor ? `Proveedor: ${d.vendor}` : prev.notes,
         }));
       } else {
-        toast.info("No se pudo leer automaticamente. Llena los datos manual.");
+        const errMsg = (result?.error as string) || "";
+        const debugMsg = (result?.debug as string) || "";
+        console.log("Extract failed:", errMsg, debugMsg);
+        toast.info(errMsg ? `${errMsg}: ${debugMsg.substring(0, 80)}` : "No se pudo leer. Llena los datos manual.");
       }
     } catch {
       toast.info("No se pudo procesar la imagen. Llena los datos manual.");
