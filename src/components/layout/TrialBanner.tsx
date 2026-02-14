@@ -38,10 +38,10 @@ export function TrialBanner() {
 
   if (days >= 3) {
     message = `${days} dias restantes`;
-    bannerStyle = "bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-emerald-600/20";
-    textStyle = "text-slate-300";
+    bannerStyle = "bg-white/90 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-black/[0.06]";
+    textStyle = "text-neutral-600 dark:text-neutral-300";
     buttonLabel = "Activar Premium";
-    buttonStyle = "bg-emerald-600 text-white hover:bg-emerald-500 border-0";
+    buttonStyle = "bg-primary text-white hover:bg-primary/90 border-0";
   } else if (days >= 1) {
     message = days === 1 ? "Ultimo dia" : `${days} dias restantes`;
     bannerStyle = "bg-amber-900/80 dark:bg-amber-950/80 backdrop-blur-xl border-b border-amber-500/30";
@@ -69,7 +69,7 @@ export function TrialBanner() {
       </Button>
       <button
         onClick={() => setDismissed(true)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:text-white/30 dark:hover:text-white/70 transition-colors"
         aria-label="Cerrar"
       >
         <X className="h-3.5 w-3.5" />

@@ -181,33 +181,33 @@ export default function Dashboard() {
         <TodayAppointments />
         <div className="space-y-6">
         <TomorrowSummary />
-        <div className="rounded-xl border border-white/30 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl p-6 shadow-sm">
+        <div className="rounded-xl border border-black/[0.06] dark:border-white/10 bg-white dark:bg-white/5 backdrop-blur-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-foreground mb-4">Acciones Rapidas</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <a
               href="/appointments"
-              className="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-white/5 p-4 transition-all hover:bg-white/70 dark:hover:bg-white/10 group"
+              className="flex items-center gap-3 rounded-xl border border-black/[0.04] dark:border-white/10 bg-neutral-50 dark:bg-white/5 p-4 transition-all hover:bg-neutral-100 dark:hover:bg-white/10 group"
             >
               <Calendar className="h-5 w-5 text-muted-foreground" />
               <span className="font-medium">Nueva Cita</span>
             </a>
             <a
               href="/clients"
-              className="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-white/5 p-4 transition-all hover:bg-white/70 dark:hover:bg-white/10 group"
+              className="flex items-center gap-3 rounded-xl border border-black/[0.04] dark:border-white/10 bg-neutral-50 dark:bg-white/5 p-4 transition-all hover:bg-neutral-100 dark:hover:bg-white/10 group"
             >
               <Users className="h-5 w-5 text-muted-foreground" />
               <span className="font-medium">Nuevo Cliente</span>
             </a>
             <a
               href="/pos"
-              className="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-white/5 p-4 transition-all hover:bg-white/70 dark:hover:bg-white/10 group"
+              className="flex items-center gap-3 rounded-xl border border-black/[0.04] dark:border-white/10 bg-neutral-50 dark:bg-white/5 p-4 transition-all hover:bg-neutral-100 dark:hover:bg-white/10 group"
             >
               <ShoppingCart className="h-5 w-5 text-muted-foreground" />
               <span className="font-medium">Nueva Venta</span>
             </a>
             <a
               href="/inventory"
-              className="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-white/5 p-4 transition-all hover:bg-white/70 dark:hover:bg-white/10 group"
+              className="flex items-center gap-3 rounded-xl border border-black/[0.04] dark:border-white/10 bg-neutral-50 dark:bg-white/5 p-4 transition-all hover:bg-neutral-100 dark:hover:bg-white/10 group"
             >
               <Package className="h-5 w-5 text-muted-foreground" />
               <span className="font-medium">Inventario</span>

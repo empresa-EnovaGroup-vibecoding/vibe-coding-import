@@ -23,13 +23,13 @@ export function MetricCard({
 }: MetricCardProps) {
   const navigate = useNavigate();
 
-  const cardStyle = "bg-white/60 dark:bg-white/5 border-white/30 dark:border-white/10";
+  const cardStyle = "bg-white dark:bg-white/5 border-black/[0.06] dark:border-white/10";
 
   const iconStyles = {
-    default: "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400",
+    default: "bg-neutral-100 dark:bg-white/10 text-neutral-500 dark:text-neutral-400",
     warning: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
     success: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    primary: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    primary: "bg-primary/10 text-primary",
   };
 
   return (
