@@ -135,7 +135,15 @@ export default function Expenses() {
           body: JSON.stringify({ imageBase64: base64, mimeType: "image/jpeg" }),
         }
       );
-      const result = await res.json();
+      if (res.status === 429 || res.status === 400) {
+        const body = await res.json().catch(() => ({}));
+        if (res.status === 429 || body?.error?.includes("429")) {
+          toast.error("La API está saturada. Intenta de nuevo en unos segundos.", { duration: 5000 });
+          return;
+        }
+      }
+
+      const result = await res.json().catch(() => ({ success: false }));
 
       if (result.success && result.data) {
         const d = result.data;
