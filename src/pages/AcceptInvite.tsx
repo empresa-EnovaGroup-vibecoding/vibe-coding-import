@@ -217,7 +217,7 @@ export default function AcceptInvite() {
             <div>
               <CardTitle className="text-2xl">{inviteInfo?.tenant_name}</CardTitle>
               <CardDescription>
-                Te han invitado a unirte como {inviteInfo?.role === "staff" ? "empleado" : inviteInfo?.role}
+                Te han invitado a unirte como {inviteInfo?.role === "staff" ? "usuario" : inviteInfo?.role}
               </CardDescription>
             </div>
           </CardHeader>
@@ -261,7 +261,7 @@ export default function AcceptInvite() {
           <div>
             <CardTitle className="text-2xl">{inviteInfo?.tenant_name}</CardTitle>
             <CardDescription>
-              Te han invitado a unirte como {inviteInfo?.role === "staff" ? "empleado" : inviteInfo?.role}.
+              Te han invitado a unirte como {inviteInfo?.role === "staff" ? "usuario" : inviteInfo?.role}.
               {isSignup ? " Crea tu cuenta para continuar." : " Inicia sesion para continuar."}
             </CardDescription>
           </div>

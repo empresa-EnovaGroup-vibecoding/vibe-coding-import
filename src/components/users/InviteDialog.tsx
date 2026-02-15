@@ -69,15 +69,15 @@ export function InviteDialog({ onInviteCreated }: InviteDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
-          Invitar empleado
+          Invitar usuario
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Invitar empleado</DialogTitle>
+          <DialogTitle>Invitar usuario</DialogTitle>
           <DialogDescription>
             Genera un link de invitacion y compartelo por WhatsApp u otro medio.
-            El empleado creara su cuenta y quedara conectado a "{tenant?.name}".
+            El usuario creara su cuenta y quedara conectado a "{tenant?.name}".
           </DialogDescription>
         </DialogHeader>
 
@@ -121,7 +121,7 @@ export function InviteDialog({ onInviteCreated }: InviteDialogProps) {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Este link expira en 7 dias. El empleado entrara como Staff.
+                Este link expira en 7 dias. El usuario entrara como Staff.
               </p>
               <Button
                 variant="outline"
