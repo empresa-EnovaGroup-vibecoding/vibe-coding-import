@@ -31,6 +31,7 @@ interface BulkReminderButtonProps {
 export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
   const { tenantId } = useTenant();
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const remindable = appointments.filter(
     (a) =>
@@ -43,9 +44,11 @@ export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
   const sentCount = remindable.filter((a) => sentIds.has(a.id)).length;
 
   const handleSendReminder = async (appointment: Appointment) => {
+    if (sendingId) return;
     const phone = appointment.clients?.phone;
     const clientName = appointment.clients?.name ?? "Cliente";
     if (!phone) return;
+    setSendingId(appointment.id);
 
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     const date = new Date(appointment.start_time);
@@ -95,6 +98,8 @@ export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
       setSentIds((prev) => new Set(prev).add(appointment.id));
     } catch {
       toast.error("Error al enviar recordatorio");
+    } finally {
+      setSendingId(null);
     }
   };
 
@@ -159,9 +164,10 @@ export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
                     size="sm"
                     className="bg-[#25D366] hover:bg-[#128C7E] text-white border-none gap-1.5 h-8 shrink-0"
                     onClick={() => handleSendReminder(appointment)}
+                    disabled={sendingId === appointment.id}
                   >
                     <MessageCircle className="h-3.5 w-3.5" />
-                    Enviar
+                    {sendingId === appointment.id ? "Enviando..." : "Enviar"}
                   </Button>
                 )}
               </div>

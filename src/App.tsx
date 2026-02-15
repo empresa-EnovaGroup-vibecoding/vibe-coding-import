@@ -15,6 +15,7 @@ import { SuperAdminLayout } from "@/components/super-admin/SuperAdminLayout";
 import { Loader2 } from "lucide-react";
 import { ReloadPrompt } from "@/components/pwa/ReloadPrompt";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
+import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 
 // Paginas criticas (carga inmediata)
 import Index from "./pages/Index";
@@ -76,6 +77,7 @@ const RequireTenant = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -416,6 +418,7 @@ const App = () => (
     <ReloadPrompt />
     <PWAInstallPrompt />
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

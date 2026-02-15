@@ -224,7 +224,7 @@ export default function Settings() {
                   {logoPreview ? (
                     <img
                       src={logoPreview}
-                      alt="Logo"
+                      alt="Logo del negocio"
                       className="h-full w-full object-cover"
                     />
                   ) : (

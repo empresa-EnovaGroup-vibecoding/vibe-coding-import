@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
 import { format } from "date-fns";
@@ -23,9 +24,12 @@ export function WhatsAppButton({
   className,
 }: WhatsAppButtonProps) {
   const { tenantId } = useTenant();
+  const [isSending, setIsSending] = useState(false);
   if (!phone) return null;
 
   const handleClick = async () => {
+    if (isSending) return;
+    setIsSending(true);
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     const date = new Date(appointmentTime);
     const formattedDate = format(date, "EEEE d 'de' MMMM", { locale: es });
@@ -65,6 +69,7 @@ export function WhatsAppButton({
 
     const message = encodeURIComponent(messageText);
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
+    setIsSending(false);
   };
 
   return (
@@ -73,6 +78,7 @@ export function WhatsAppButton({
       size="sm"
       className={`bg-[#25D366] hover:bg-[#128C7E] text-white border-none gap-2 ${className}`}
       onClick={handleClick}
+      disabled={isSending}
     >
       <MessageCircle className="h-4 w-4" />
       WhatsApp

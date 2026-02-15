@@ -262,7 +262,7 @@ export default function ConfirmAppointment() {
           {appointment.tenant_logo ? (
             <img
               src={appointment.tenant_logo}
-              alt={appointment.tenant_name}
+              alt={`Logo de ${appointment.tenant_name}`}
               className="h-20 w-20 mx-auto rounded-lg object-cover shadow-md"
             />
           ) : (

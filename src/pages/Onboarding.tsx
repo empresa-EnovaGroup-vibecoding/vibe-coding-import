@@ -51,6 +51,7 @@ export default function Onboarding() {
   const [isCreating, setIsCreating] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const currentSlug = generateSlug(formData.businessName);
 
@@ -231,14 +232,16 @@ export default function Onboarding() {
           <div className="mt-4 pt-4 border-t border-border text-center">
             <button
               type="button"
+              disabled={isSigningOut}
               onClick={async () => {
+                setIsSigningOut(true);
                 await signOut();
                 navigate("/auth", { replace: true });
               }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1 disabled:opacity-50"
             >
               <LogOut className="h-3 w-3" />
-              Cerrar sesion e ir a login
+              {isSigningOut ? "Cerrando sesion..." : "Cerrar sesion e ir a login"}
             </button>
           </div>
         </CardContent>

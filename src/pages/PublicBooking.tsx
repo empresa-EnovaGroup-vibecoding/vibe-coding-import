@@ -214,7 +214,7 @@ export default function PublicBooking() {
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
           {info.logo_url && (
-            <img src={info.logo_url} alt={info.name} className="h-10 w-10 rounded-lg object-cover" />
+            <img src={info.logo_url} alt={`Logo de ${info.name}`} className="h-10 w-10 rounded-lg object-cover" />
           )}
           <div>
             <h1 className="font-bold text-lg text-gray-900">{info.name}</h1>
