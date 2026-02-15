@@ -378,7 +378,7 @@ export default function Appointments() {
   const datesWithAppointments = appointments?.map(apt => new Date(apt.start_time)) || [];
 
   return (
-    <div className="space-y-6 pt-12 lg:pt-0">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Agenda</h1>

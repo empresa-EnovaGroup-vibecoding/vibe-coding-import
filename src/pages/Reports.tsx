@@ -181,7 +181,7 @@ export default function Reports() {
   });
 
   return (
-    <div className="space-y-6 pt-12 lg:pt-0">
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Finanzas</h1>
         <p className="text-muted-foreground mt-1">Estadisticas, reportes y gastos de tu negocio</p>
