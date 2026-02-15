@@ -159,6 +159,7 @@ export function PackageList() {
                     size="sm"
                     onClick={() => setDeleteTarget(pkg)}
                     disabled={deleteMutation.isPending}
+                    aria-label="Eliminar paquete"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>

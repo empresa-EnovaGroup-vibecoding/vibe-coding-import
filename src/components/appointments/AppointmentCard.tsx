@@ -128,7 +128,7 @@ export function AppointmentCard({
             size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-primary"
             onClick={() => onEdit(appointment)}
-            title="Editar cita"
+            aria-label="Editar cita"
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -163,6 +163,7 @@ export function AppointmentCard({
                   onDelete(appointment.id);
                 }
               }}
+              aria-label="Eliminar cita"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

@@ -63,8 +63,11 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground">
+        Saltar al contenido principal
+      </a>
       <AppSidebar />
-      <main className="lg:pl-64">
+      <main id="main-content" className="lg:pl-64">
         <TrialBanner />
         <div className="min-h-screen p-4 lg:p-8">
           <Suspense fallback={<ContentLoader />}>

@@ -91,6 +91,7 @@ export default function EvaluationPhotoUploader({
                 type="button"
                 onClick={() => handleRemove(url)}
                 className="absolute top-1 right-1 rounded-full bg-black/60 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label={`Eliminar foto ${i + 1}`}
               >
                 <X className="h-3 w-3 text-white" />
               </button>

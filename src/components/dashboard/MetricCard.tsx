@@ -35,7 +35,10 @@ export function MetricCard({
   return (
     <div
       onClick={href ? () => navigate(href) : undefined}
+      onKeyDown={href ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(href); } } : undefined}
       role={href ? "link" : undefined}
+      tabIndex={href ? 0 : undefined}
+      aria-label={href ? title : undefined}
       className={cn(
         "rounded-xl border p-6 shadow-sm backdrop-blur-xl transition-all duration-200 hover:shadow-md animate-fade-in",
         cardStyle,

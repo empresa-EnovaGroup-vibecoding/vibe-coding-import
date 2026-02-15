@@ -108,7 +108,7 @@ export function AppSidebar() {
 
   return <>
       {/* Mobile menu button */}
-      <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 lg:hidden bg-card shadow-md" onClick={() => setMobileOpen(!mobileOpen)}>
+      <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 lg:hidden bg-card shadow-md" onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? "Cerrar menu" : "Abrir menu"} aria-expanded={mobileOpen}>
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
@@ -198,7 +198,7 @@ export function AppSidebar() {
                 <button
                   onClick={handleLogout}
                   className="shrink-0 rounded-lg p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-black/[0.04] transition-colors"
-                  title="Cerrar sesion"
+                  aria-label="Cerrar sesion"
                 >
                   <LogOut className="h-4 w-4" />
                 </button>
