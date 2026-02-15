@@ -42,6 +42,10 @@ export default function Reports() {
         supabase.from("expenses").select("amount, expense_date").eq("tenant_id", tenantId).gte("expense_date", sixMonthsAgo.split("T")[0]).lte("expense_date", now.split("T")[0]),
       ]);
 
+      if (salesRes.error) throw salesRes.error;
+      if (appointmentsRes.error) throw appointmentsRes.error;
+      if (expensesRes.error) throw expensesRes.error;
+
       const months = [];
       for (let i = 5; i >= 0; i--) {
         const date = subMonths(new Date(), i);
@@ -103,10 +107,16 @@ export default function Reports() {
     queryKey: ["frequentClients", tenantId],
     queryFn: async () => {
       if (!tenantId) return [];
-      const [{ data: appointments }, { data: sales }] = await Promise.all([
+      const [appointmentsRes, salesRes] = await Promise.all([
         supabase.from("appointments").select(`client_id, clients (name)`).eq("tenant_id", tenantId),
         supabase.from("sales").select(`client_id, total_amount, clients (name)`).eq("tenant_id", tenantId).not("client_id", "is", null),
       ]);
+
+      if (appointmentsRes.error) throw appointmentsRes.error;
+      if (salesRes.error) throw salesRes.error;
+
+      const appointments = appointmentsRes.data;
+      const sales = salesRes.data;
 
       const clientStats: Record<string, { name: string; appointments: number; purchases: number; totalSpent: number }> = {};
 

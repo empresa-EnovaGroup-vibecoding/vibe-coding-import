@@ -193,7 +193,8 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
             if (name) serviceCounts[name] = (serviceCounts[name] || 0) + 1;
           });
         });
-        const topService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0];
+        const sortedServices = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1]);
+        const topService = sortedServices.length > 0 ? sortedServices[0] : null;
 
         return (
           <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">

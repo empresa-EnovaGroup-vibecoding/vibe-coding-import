@@ -88,24 +88,18 @@ export default function Expenses() {
   };
 
   const callExtractFunction = async (base64: string, attempt = 1): Promise<Record<string, unknown> | null> => {
-    const res = await fetch(
-      "https://oisqrlhwwnuilurvvvdf.supabase.co/functions/v1/extract-expense-receipt",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pc3FybGh3d251aWx1cnZ2dmRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NzA5MzAsImV4cCI6MjA4NTA0NjkzMH0.LaPbqMZt3lAaqTIdA_a8fnFvWM_ez_axXV-C-MppbBM",
-        },
-        body: JSON.stringify({ imageBase64: base64, mimeType: "image/jpeg" }),
+    const { data, error } = await supabase.functions.invoke("extract-expense-receipt", {
+      body: { imageBase64: base64, mimeType: "image/jpeg" },
+    });
+    if (error) {
+      // Retry once on rate limit (429)
+      if (error.message?.includes("429") && attempt < 3) {
+        await new Promise((r) => setTimeout(r, 2000 * attempt));
+        return callExtractFunction(base64, attempt + 1);
       }
-    );
-    const json = await res.json();
-    // Retry once on rate limit (429)
-    if (json?.error?.includes?.("429") && attempt < 3) {
-      await new Promise((r) => setTimeout(r, 2000 * attempt));
-      return callExtractFunction(base64, attempt + 1);
+      return { error: error.message };
     }
-    return json;
+    return data;
   };
 
   const handleReceiptUpload = async (file: File) => {
@@ -141,7 +135,6 @@ export default function Expenses() {
       } else {
         const errMsg = (result?.error as string) || "";
         const debugMsg = (result?.debug as string) || "";
-        console.log("Extract failed:", errMsg, debugMsg);
         toast.info(errMsg ? `${errMsg}: ${debugMsg.substring(0, 80)}` : "No se pudo leer. Llena los datos manual.");
       }
     } catch {

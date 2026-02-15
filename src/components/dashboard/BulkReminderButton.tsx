@@ -40,48 +40,57 @@ export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
   const sentCount = remindable.filter((a) => sentIds.has(a.id)).length;
 
   const handleSendReminder = async (appointment: Appointment) => {
-    const phone = appointment.clients!.phone!;
+    const phone = appointment.clients?.phone;
+    const clientName = appointment.clients?.name ?? "Cliente";
+    if (!phone) return;
+
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     const date = new Date(appointment.start_time);
     const formattedDate = format(date, "EEEE d 'de' MMMM", { locale: es });
     const formattedTime = format(date, "HH:mm");
 
-    // Generate confirmation token if not exists
-    let token = appointment.confirmation_token;
-    if (!token) {
-      token = crypto.randomUUID();
-      await supabase
-        .from("appointments")
-        .update({
-          confirmation_token: token,
-          reminder_sent_at: new Date().toISOString(),
-        })
-        .eq("id", appointment.id);
-    } else {
-      await supabase
-        .from("appointments")
-        .update({ reminder_sent_at: new Date().toISOString() })
-        .eq("id", appointment.id);
+    try {
+      // Generate confirmation token if not exists
+      let token = appointment.confirmation_token;
+      if (!token) {
+        token = crypto.randomUUID();
+        const { error } = await supabase
+          .from("appointments")
+          .update({
+            confirmation_token: token,
+            reminder_sent_at: new Date().toISOString(),
+          })
+          .eq("id", appointment.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("appointments")
+          .update({ reminder_sent_at: new Date().toISOString() })
+          .eq("id", appointment.id);
+        if (error) throw error;
+      }
+
+      // Build confirmation link
+      const confirmLink = `${window.location.origin}/confirm/${token}`;
+
+      const serviceNames = appointment.appointment_services
+        ?.map((s) => s.services?.name)
+        .filter(Boolean)
+        .join(", ");
+
+      const message = encodeURIComponent(
+        `Hola ${clientName}, te recordamos tu cita` +
+        (serviceNames ? ` de *${serviceNames}*` : "") +
+        ` para el ${formattedDate} a las ${formattedTime} hrs.\n\n` +
+        `Confirma o cancela aqui:\n${confirmLink}\n\n` +
+        `Te esperamos!`
+      );
+
+      window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
+      setSentIds((prev) => new Set(prev).add(appointment.id));
+    } catch {
+      // Silent fail - WhatsApp won't open but app stays stable
     }
-
-    // Build confirmation link
-    const confirmLink = `${window.location.origin}/confirm/${token}`;
-
-    const serviceNames = appointment.appointment_services
-      ?.map((s) => s.services?.name)
-      .filter(Boolean)
-      .join(", ");
-
-    const message = encodeURIComponent(
-      `Hola ${appointment.clients!.name}, te recordamos tu cita` +
-      (serviceNames ? ` de *${serviceNames}*` : "") +
-      ` para el ${formattedDate} a las ${formattedTime} hrs.\n\n` +
-      `Confirma o cancela aqui:\n${confirmLink}\n\n` +
-      `Te esperamos!`
-    );
-
-    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
-    setSentIds((prev) => new Set(prev).add(appointment.id));
   };
 
   return (
