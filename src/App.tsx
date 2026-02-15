@@ -41,6 +41,7 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const PublicBooking = lazy(() => import("./pages/PublicBooking"));
 const ConfirmAppointment = lazy(() => import("./pages/ConfirmAppointment"));
+const Landing = lazy(() => import("./pages/Landing"));
 const SuperAdminDashboard = lazy(() => import("./pages/super-admin/SuperAdminDashboard").then(m => ({ default: m.SuperAdminDashboard })));
 const SuperAdminTenants = lazy(() => import("./pages/super-admin/SuperAdminTenants").then(m => ({ default: m.SuperAdminTenants })));
 const SuperAdminRevenue = lazy(() => import("./pages/super-admin/SuperAdminRevenue").then(m => ({ default: m.SuperAdminRevenue })));
@@ -88,6 +89,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public routes */}
+              <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/invite/:token" element={<AcceptInvite />} />
               <Route path="/book/:slug" element={<PublicBooking />} />
