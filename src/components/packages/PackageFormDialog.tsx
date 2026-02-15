@@ -68,15 +68,18 @@ export function PackageFormDialog({
   const { tenantId } = useTenant();
 
   const { data: services } = useQuery({
-    queryKey: ["services"],
+    queryKey: ["services", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("services")
         .select("id, name")
+        .eq("tenant_id", tenantId)
         .order("name");
       if (error) throw error;
       return data;
     },
+    enabled: !!tenantId,
   });
 
   const form = useForm<PackageFormData>({
@@ -133,7 +136,8 @@ export function PackageFormDialog({
         const { error } = await supabase
           .from("packages")
           .update(payload)
-          .eq("id", editingPackage.id);
+          .eq("id", editingPackage.id)
+          .eq("tenant_id", tenantId);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("packages").insert(payload);
@@ -141,7 +145,7 @@ export function PackageFormDialog({
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["packages"] });
+      queryClient.invalidateQueries({ queryKey: ["packages", tenantId] });
       toast.success(editingPackage ? "Paquete actualizado" : "Paquete creado");
       onOpenChange();
     },

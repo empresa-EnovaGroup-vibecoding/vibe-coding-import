@@ -84,6 +84,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       setMemberships([]);
       setActiveTenantId(null);
       setIsSuperAdmin(false);
+      localStorage.removeItem(IMPERSONATE_KEY);
+      setImpersonateId(null);
+      setImpersonatedTenant(null);
       setLoading(false);
       return;
     }

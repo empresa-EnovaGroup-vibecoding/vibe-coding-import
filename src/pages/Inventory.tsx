@@ -153,6 +153,15 @@ export default function Inventory() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       if (!tenantId) throw new Error("No tenant ID");
+      // Check if product has associated sales
+      const { count } = await supabase
+        .from("sale_items")
+        .select("*", { count: "exact", head: true })
+        .eq("product_id", id)
+        .eq("tenant_id", tenantId);
+      if (count && count > 0) {
+        throw new Error(`Este producto tiene ${count} ventas registradas. No se puede eliminar.`);
+      }
       const { error } = await supabase
         .from("inventory")
         .delete()
@@ -166,8 +175,8 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ["lowStockCount", tenantId] });
       toast.success("Producto eliminado exitosamente");
     },
-    onError: () => {
-      toast.error("Error al eliminar el producto");
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al eliminar el producto");
     },
   });
 

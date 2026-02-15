@@ -3,6 +3,7 @@ import { MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 
 interface WhatsAppButtonProps {
   phone: string | null;
@@ -21,6 +22,7 @@ export function WhatsAppButton({
   confirmationToken,
   className,
 }: WhatsAppButtonProps) {
+  const { tenantId } = useTenant();
   if (!phone) return null;
 
   const handleClick = async () => {
@@ -39,7 +41,8 @@ export function WhatsAppButton({
           confirmation_token: token,
           reminder_sent_at: new Date().toISOString(),
         })
-        .eq("id", appointmentId);
+        .eq("id", appointmentId)
+        .eq("tenant_id", tenantId);
       confirmLink = `${window.location.origin}/confirm/${token}`;
     } else if (confirmationToken) {
       confirmLink = `${window.location.origin}/confirm/${confirmationToken}`;
@@ -47,7 +50,8 @@ export function WhatsAppButton({
         await supabase
           .from("appointments")
           .update({ reminder_sent_at: new Date().toISOString() })
-          .eq("id", appointmentId);
+          .eq("id", appointmentId)
+          .eq("tenant_id", tenantId);
       }
     }
 
