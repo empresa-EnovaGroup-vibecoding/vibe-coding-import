@@ -36,7 +36,7 @@ const IOS_STEPS: Step[] = [
   {
     icon: <CheckCircle2 className="h-5 w-5" />,
     title: "Toca \"Agregar\"",
-    description: "Nexus aparecera como app en tu pantalla de inicio con el icono morado",
+    description: "Aura aparecera como app en tu pantalla de inicio con el icono morado",
   },
 ];
 
@@ -54,7 +54,7 @@ const ANDROID_STEPS: Step[] = [
   {
     icon: <CheckCircle2 className="h-5 w-5" />,
     title: "Confirma la instalacion",
-    description: "Nexus aparecera como app en tu pantalla de inicio",
+    description: "Aura aparecera como app en tu pantalla de inicio",
   },
 ];
 
@@ -67,7 +67,7 @@ const DESKTOP_STEPS: Step[] = [
   {
     icon: <CheckCircle2 className="h-5 w-5" />,
     title: "Haz clic en \"Instalar\"",
-    description: "Nexus se abrira como una ventana independiente sin barras del navegador",
+    description: "Aura se abrira como una ventana independiente sin barras del navegador",
   },
 ];
 
@@ -89,7 +89,7 @@ export function InstallAppGuide() {
           </div>
           <div>
             <p className="font-medium">App instalada</p>
-            <p className="text-sm text-muted-foreground">Nexus ya esta instalada en este dispositivo</p>
+            <p className="text-sm text-muted-foreground">Aura ya esta instalada en este dispositivo</p>
           </div>
         </CardContent>
       </Card>
@@ -104,10 +104,10 @@ export function InstallAppGuide() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Smartphone className="h-5 w-5" />
-          Instalar Nexus como app
+          Instalar Aura como app
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Instala Nexus en tu {deviceLabel} para acceso rapido sin abrir el navegador.
+          Instala Aura en tu {deviceLabel} para acceso rapido sin abrir el navegador.
         </p>
       </CardHeader>
       <CardContent>
@@ -130,7 +130,7 @@ export function InstallAppGuide() {
 
         {device !== "desktop" && (
           <div className="mt-4 rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
-            Despues de instalar, Nexus se abre en pantalla completa, sin barras del navegador, y se actualiza automaticamente.
+            Despues de instalar, Aura se abre en pantalla completa, sin barras del navegador, y se actualiza automaticamente.
           </div>
         )}
       </CardContent>

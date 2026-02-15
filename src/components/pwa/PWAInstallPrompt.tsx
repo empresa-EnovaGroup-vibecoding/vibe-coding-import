@@ -69,7 +69,7 @@ export function PWAInstallPrompt() {
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
               <Download className="h-5 w-5 text-primary shrink-0" />
-              <p className="text-sm font-medium">Instalar Nexus</p>
+              <p className="text-sm font-medium">Instalar Aura</p>
             </div>
             <Button size="sm" variant="ghost" className="h-7 w-7 p-0 -mt-1 -mr-1" onClick={handleDismiss}>
               <X className="h-4 w-4" />
@@ -102,7 +102,7 @@ export function PWAInstallPrompt() {
       <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-card p-4 shadow-lg">
         <Download className="h-5 w-5 text-primary shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">Instalar Nexus</p>
+          <p className="text-sm font-medium">Instalar Aura</p>
           <p className="text-xs text-muted-foreground">Acceso rapido desde tu pantalla de inicio</p>
         </div>
         <div className="flex gap-1.5 shrink-0">

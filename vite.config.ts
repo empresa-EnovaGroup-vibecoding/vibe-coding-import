@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "prompt",
       includeAssets: ["icon-192.png", "icon-512.png", "icon-maskable.png"],
       manifest: {
-        name: "Nexus - Gestion de Negocio",
-        short_name: "Nexus",
+        name: "Aura - Gestion de Negocio",
+        short_name: "Aura",
         description: "Panel de gestion interna para negocios de bienestar y belleza",
         start_url: "/",
         display: "standalone",
