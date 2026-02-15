@@ -11,6 +11,7 @@ import { Building2, Loader2, Camera, Trash2, Globe, Link2, Copy, CheckCircle2 } 
 import { toast } from "sonner";
 import { z } from "zod";
 import { BusinessHoursCard } from "@/components/settings/BusinessHoursCard";
+import { InstallAppGuide } from "@/components/pwa/InstallAppGuide";
 
 const settingsSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(255),
@@ -375,6 +376,8 @@ export default function Settings() {
           </p>
         </CardContent>
       </Card>
+
+      <InstallAppGuide />
     </div>
   );
 }
