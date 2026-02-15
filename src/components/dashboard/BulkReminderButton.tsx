@@ -11,6 +11,7 @@ import { MessageCircle, Check, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 
 interface Appointment {
   id: string;
@@ -27,6 +28,7 @@ interface BulkReminderButtonProps {
 }
 
 export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
+  const { tenantId } = useTenant();
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
   const remindable = appointments.filter(
@@ -60,13 +62,15 @@ export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
             confirmation_token: token,
             reminder_sent_at: new Date().toISOString(),
           })
-          .eq("id", appointment.id);
+          .eq("id", appointment.id)
+          .eq("tenant_id", tenantId);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("appointments")
           .update({ reminder_sent_at: new Date().toISOString() })
-          .eq("id", appointment.id);
+          .eq("id", appointment.id)
+          .eq("tenant_id", tenantId);
         if (error) throw error;
       }
 

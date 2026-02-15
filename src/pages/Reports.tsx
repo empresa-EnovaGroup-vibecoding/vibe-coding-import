@@ -83,10 +83,12 @@ export default function Reports() {
     queryKey: ["popularServices", tenantId],
     queryFn: async () => {
       if (!tenantId) return [];
+      const twelveMonthsAgo = startOfMonth(subMonths(new Date(), 11)).toISOString();
       const { data, error } = await supabase
         .from("appointment_services")
-        .select(`service_id, tenant_id, services (name)`)
-        .eq("tenant_id", tenantId);
+        .select(`service_id, tenant_id, created_at, services (name)`)
+        .eq("tenant_id", tenantId)
+        .gte("created_at", twelveMonthsAgo);
 
       if (error) throw error;
 
@@ -107,9 +109,10 @@ export default function Reports() {
     queryKey: ["frequentClients", tenantId],
     queryFn: async () => {
       if (!tenantId) return [];
+      const twelveMonthsAgo = startOfMonth(subMonths(new Date(), 11)).toISOString();
       const [appointmentsRes, salesRes] = await Promise.all([
-        supabase.from("appointments").select(`client_id, clients (name)`).eq("tenant_id", tenantId),
-        supabase.from("sales").select(`client_id, total_amount, clients (name)`).eq("tenant_id", tenantId).not("client_id", "is", null),
+        supabase.from("appointments").select(`client_id, clients (name)`).eq("tenant_id", tenantId).gte("start_time", twelveMonthsAgo),
+        supabase.from("sales").select(`client_id, total_amount, clients (name)`).eq("tenant_id", tenantId).not("client_id", "is", null).gte("created_at", twelveMonthsAgo),
       ]);
 
       if (appointmentsRes.error) throw appointmentsRes.error;

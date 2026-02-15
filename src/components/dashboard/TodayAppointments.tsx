@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Clock, User, CheckCircle2, Send } from "lucide-react";
@@ -18,13 +19,15 @@ const statusConfig = {
 };
 
 export function TodayAppointments() {
+  const { tenantId } = useTenant();
   const today = new Date();
   const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
   const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
 
   const { data: appointments, isLoading } = useQuery({
-    queryKey: ["todayAppointments"],
+    queryKey: ["todayAppointments", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("appointments")
         .select(`
@@ -35,6 +38,7 @@ export function TodayAppointments() {
             services (name)
           )
         `)
+        .eq("tenant_id", tenantId)
         .gte("start_time", startOfDay)
         .lte("start_time", endOfDay)
         .order("start_time", { ascending: true });
@@ -42,6 +46,7 @@ export function TodayAppointments() {
       if (error) throw error;
       return data;
     },
+    enabled: !!tenantId,
   });
 
   if (isLoading) {

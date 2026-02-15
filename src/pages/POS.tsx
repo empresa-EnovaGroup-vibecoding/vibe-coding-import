@@ -106,19 +106,18 @@ export default function POS() {
 
       if (itemsError) throw itemsError;
 
-      // Update inventory for products
+      // Atomic inventory decrement for products (prevents overselling)
       for (const item of cart) {
         if (item.productId) {
-          const product = products?.find((p) => p.id === item.productId);
-          if (product) {
-            const { error: updateError } = await supabase
-              .from("inventory")
-              .update({ stock_level: product.stock_level - item.quantity })
-              .eq("id", item.productId)
-              .eq("tenant_id", tenantId);
-
-            if (updateError) throw updateError;
-          }
+          const { error: decrementError } = await supabase.rpc(
+            "decrement_inventory",
+            {
+              p_product_id: item.productId,
+              p_tenant_id: tenantId,
+              p_quantity: item.quantity,
+            }
+          );
+          if (decrementError) throw decrementError;
         }
       }
 
