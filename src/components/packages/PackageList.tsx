@@ -77,7 +77,7 @@ export function PackageList() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 pt-12 lg:pt-0">
+      <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-48 bg-white/5 dark:bg-white/[0.02] backdrop-blur-sm border border-white/10 animate-pulse rounded-xl" />
@@ -88,7 +88,7 @@ export function PackageList() {
   }
 
   return (
-    <div className="space-y-6 pt-12 lg:pt-0">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Paquetes</h2>

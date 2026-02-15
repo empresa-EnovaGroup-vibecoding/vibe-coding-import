@@ -147,7 +147,7 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
   }
 
   return (
-    <div className="space-y-6 pt-12 lg:pt-0 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack}>
