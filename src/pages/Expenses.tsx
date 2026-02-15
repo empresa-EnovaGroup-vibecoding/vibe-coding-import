@@ -133,9 +133,7 @@ export default function Expenses() {
           notes: d.vendor ? `Proveedor: ${d.vendor}` : prev.notes,
         }));
       } else {
-        const errMsg = (result?.error as string) || "";
-        const debugMsg = (result?.debug as string) || "";
-        toast.info(errMsg ? `${errMsg}: ${debugMsg.substring(0, 80)}` : "No se pudo leer. Llena los datos manual.");
+        toast.info("No se pudo leer el comprobante. Llena los datos manual.");
       }
     } catch {
       toast.info("No se pudo procesar la imagen. Llena los datos manual.");
