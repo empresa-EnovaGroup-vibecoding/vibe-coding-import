@@ -25,6 +25,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { logAudit } from "@/lib/audit";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -153,7 +154,8 @@ export function SuperAdminTenantDetail() {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { planType }) => {
+      logAudit({ tenantId: tenantId!, action: "activate", entityType: "tenant", entityId: tenantId!, details: { planType } });
       queryClient.invalidateQueries({ queryKey: ["super-admin"] });
       toast.success("Plan activado exitosamente");
     },
@@ -172,6 +174,7 @@ export function SuperAdminTenantDetail() {
       if (error) throw error;
     },
     onSuccess: () => {
+      logAudit({ tenantId: tenantId!, action: "suspend", entityType: "tenant", entityId: tenantId! });
       queryClient.invalidateQueries({ queryKey: ["super-admin"] });
       toast.success("Negocio suspendido");
     },
@@ -185,7 +188,7 @@ export function SuperAdminTenantDetail() {
     mutationFn: async () => {
       // Delete all related data first, then the tenant
       const tables = [
-        "tenant_notes", "appointments", "sales", "sale_items", "clients", "services",
+        "audit_log", "tenant_notes", "appointments", "sales", "sale_items", "clients", "services",
         "inventory", "team_members", "cabins", "packages", "package_services",
         "tenant_members", "tenant_invites",
       ];
@@ -221,7 +224,8 @@ export function SuperAdminTenantDetail() {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { days }) => {
+      logAudit({ tenantId: tenantId!, action: "extend_trial", entityType: "tenant", entityId: tenantId!, details: { days } });
       queryClient.invalidateQueries({ queryKey: ["super-admin"] });
       toast.success("Trial extendido");
     },
@@ -243,7 +247,8 @@ export function SuperAdminTenantDetail() {
         .eq("id", tenantId!);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, data) => {
+      logAudit({ tenantId: tenantId!, action: "edit", entityType: "tenant", entityId: tenantId!, details: data });
       queryClient.invalidateQueries({ queryKey: ["super-admin"] });
       toast.success("Informacion actualizada");
     },
@@ -254,6 +259,7 @@ export function SuperAdminTenantDetail() {
 
   const handleImpersonate = () => {
     if (!tenant) return;
+    logAudit({ tenantId: tenant.id, action: "impersonate", entityType: "tenant", entityId: tenant.id });
     localStorage.setItem("impersonate_tenant_id", tenant.id);
     toast.success(`Impersonando: ${tenant.name}`);
     navigate("/");

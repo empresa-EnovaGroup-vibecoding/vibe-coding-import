@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Loader2 } from "lucide-react";
+import { Users, Loader2, Download } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -19,8 +19,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { exportToCSV } from "@/lib/csv";
 
 interface PlatformUser {
   member_id: string;
@@ -109,14 +111,32 @@ export function SuperAdminUsers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Users className="h-8 w-8" />
-        <div>
-          <h1 className="text-3xl font-bold">Usuarios de la Plataforma</h1>
-          <p className="text-muted-foreground">
-            Todos los usuarios registrados en el sistema
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Users className="h-8 w-8" />
+          <div>
+            <h1 className="text-3xl font-bold">Usuarios de la Plataforma</h1>
+            <p className="text-muted-foreground">
+              Todos los usuarios registrados en el sistema
+            </p>
+          </div>
         </div>
+        {filteredUsers && filteredUsers.length > 0 && (
+          <Button
+            variant="outline"
+            onClick={() => exportToCSV(filteredUsers, [
+              { header: "Email", accessor: (u) => u.user_email },
+              { header: "Nombre", accessor: (u) => u.full_name ?? "" },
+              { header: "Rol", accessor: (u) => getRoleLabel(u.role) },
+              { header: "Negocio", accessor: (u) => u.tenant_name },
+              { header: "Estado Negocio", accessor: (u) => getStatusLabel(u.tenant_status) },
+              { header: "Fecha Ingreso", accessor: (u) => new Date(u.joined_at).toLocaleDateString("es-ES") },
+            ], "usuarios")}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
+        )}
       </div>
 
       <Card>

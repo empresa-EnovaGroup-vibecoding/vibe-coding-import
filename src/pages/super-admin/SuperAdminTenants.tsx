@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, CheckCircle2, XCircle, Eye } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Eye, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { logAudit } from "@/lib/audit";
+import { exportToCSV } from "@/lib/csv";
 
 type SubscriptionStatus = "trial" | "active" | "past_due" | "cancelled" | "expired";
 
@@ -73,6 +75,8 @@ export function SuperAdminTenants() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
+      const action = variables.status === "active" ? "activate" : "suspend";
+      logAudit({ tenantId: variables.id, action, entityType: "tenant", entityId: variables.id });
       queryClient.invalidateQueries({ queryKey: ["super-admin", "all-tenants"] });
       queryClient.invalidateQueries({ queryKey: ["super-admin", "total-tenants"] });
       queryClient.invalidateQueries({ queryKey: ["super-admin", "active-tenants"] });
@@ -137,11 +141,30 @@ export function SuperAdminTenants() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Gestión de Negocios</h1>
-        <p className="text-muted-foreground">
-          Administra todos los negocios registrados en la plataforma
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Gestión de Negocios</h1>
+          <p className="text-muted-foreground">
+            Administra todos los negocios registrados en la plataforma
+          </p>
+        </div>
+        {filteredTenants && filteredTenants.length > 0 && (
+          <Button
+            variant="outline"
+            onClick={() => exportToCSV(filteredTenants, [
+              { header: "Nombre", accessor: (t) => t.name },
+              { header: "Slug", accessor: (t) => t.slug },
+              { header: "Owner Email", accessor: (t) => t.owner_email ?? "" },
+              { header: "Estado", accessor: (t) => t.subscription_status },
+              { header: "Plan", accessor: (t) => t.plan_type },
+              { header: "Trial Expira", accessor: (t) => t.subscription_status === "trial" ? new Date(t.trial_ends_at).toLocaleDateString("es-ES") : "" },
+              { header: "Creado", accessor: (t) => new Date(t.created_at).toLocaleDateString("es-ES") },
+            ], "negocios")}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
+        )}
       </div>
 
       {/* Filters */}

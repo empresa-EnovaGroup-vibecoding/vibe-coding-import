@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
-type AuditAction = "create" | "update" | "delete";
-type EntityType = "client" | "appointment" | "inventory" | "sale" | "expense" | "team_member" | "service" | "cabin";
+type AuditAction = "create" | "update" | "delete" | "activate" | "suspend" | "extend_trial" | "impersonate" | "edit";
+type EntityType = "client" | "appointment" | "inventory" | "sale" | "expense" | "team_member" | "service" | "cabin" | "tenant";
 
 interface AuditEntry {
   tenantId: string;
