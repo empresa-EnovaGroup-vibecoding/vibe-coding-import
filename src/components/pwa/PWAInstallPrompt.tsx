@@ -64,7 +64,7 @@ export function PWAInstallPrompt() {
   // iOS guide
   if (showIOSGuide) {
     return (
-      <div className="fixed bottom-4 left-4 right-4 z-[199] sm:left-auto sm:right-4 sm:w-80">
+      <div className="fixed bottom-20 left-4 right-4 z-[199] sm:left-auto sm:right-4 sm:w-80">
         <div className="rounded-xl border border-primary/20 bg-card p-4 shadow-lg space-y-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
@@ -98,7 +98,7 @@ export function PWAInstallPrompt() {
   if (!installEvent) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-[199] sm:left-auto sm:right-4 sm:w-80">
+    <div className="fixed bottom-20 left-4 right-4 z-[199] sm:left-auto sm:right-4 sm:w-80">
       <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-card p-4 shadow-lg">
         <Download className="h-5 w-5 text-primary shrink-0" />
         <div className="flex-1 min-w-0">
