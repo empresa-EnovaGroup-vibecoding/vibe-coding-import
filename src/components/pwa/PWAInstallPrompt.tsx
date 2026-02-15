@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Download, X, Share } from "lucide-react";
 
@@ -12,9 +13,13 @@ function isIOS(): boolean {
 }
 
 export function PWAInstallPrompt() {
+  const { pathname } = useLocation();
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+
+  // Don't show on the landing page
+  if (pathname === "/landing") return null;
 
   useEffect(() => {
     // Don't show if already installed as standalone
