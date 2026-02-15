@@ -71,7 +71,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <AppSidebar />
       <main id="main-content" className="lg:pl-64">
         <TrialBanner />
-        <div className="p-4 lg:p-8">
+        <div className="px-4 pb-4 pt-16 lg:p-8">
           <ErrorBoundary>
             <Suspense fallback={<ContentLoader />}>
               {children}
