@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Building2, CheckCircle2, Clock, DollarSign, Loader2, AlertTriangle, Users } from "lucide-react";
 
 type SubscriptionStatus = "trial" | "active" | "past_due" | "cancelled" | "expired";
@@ -102,56 +102,62 @@ export function SuperAdminDashboard() {
 
       {/* Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Negocios</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{totalTenants}</div>
-                <p className="text-xs text-muted-foreground">Registrados en total</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <Link to="/super-admin/tenants" className="block">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Negocios</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{totalTenants}</div>
+                  <p className="text-xs text-muted-foreground">Registrados en total</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Activos</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{activeTenants}</div>
-                <p className="text-xs text-muted-foreground">Suscripcion activa</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <Link to="/super-admin/tenants?status=active" className="block">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Activos</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{activeTenants}</div>
+                  <p className="text-xs text-muted-foreground">Suscripcion activa</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">En Trial</CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{trialTenants}</div>
-                <p className="text-xs text-muted-foreground">Periodo de prueba</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <Link to="/super-admin/tenants?status=trial" className="block">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">En Trial</CardTitle>
+              <Clock className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{trialTenants}</div>
+                  <p className="text-xs text-muted-foreground">Periodo de prueba</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -170,22 +176,24 @@ export function SuperAdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">MRR</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">${mrr} USD</div>
-                <p className="text-xs text-muted-foreground">Ingresos mensuales</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <Link to="/super-admin/revenue" className="block">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">MRR</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">${mrr} USD</div>
+                  <p className="text-xs text-muted-foreground">Ingresos mensuales</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Trials Expiring Soon */}
@@ -203,10 +211,10 @@ export function SuperAdminDashboard() {
               {expiringTrials.map((tenant) => {
                 const days = daysUntilExpiry(tenant.trial_ends_at);
                 return (
-                  <div
+                  <Link
                     key={tenant.id}
-                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 cursor-pointer"
-                    onClick={() => navigate(`/super-admin/tenants/${tenant.id}`)}
+                    to={`/super-admin/tenants/${tenant.id}`}
+                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
                   >
                     <div>
                       <p className="font-medium">{tenant.name}</p>
@@ -224,7 +232,7 @@ export function SuperAdminDashboard() {
                     >
                       {days <= 0 ? "Vence hoy" : `${days} dia${days > 1 ? "s" : ""}`}
                     </Badge>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
@@ -258,14 +266,15 @@ export function SuperAdminDashboard() {
                 <TableBody>
                   {recentTenants.length > 0 ? (
                     recentTenants.map((tenant) => (
-                      <TableRow key={tenant.id}>
+                      <TableRow
+                        key={tenant.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/super-admin/tenants/${tenant.id}`)}
+                      >
                         <TableCell>
-                          <button
-                            className="font-medium text-left hover:underline hover:text-primary transition-colors"
-                            onClick={() => navigate(`/super-admin/tenants/${tenant.id}`)}
-                          >
+                          <span className="font-medium text-primary">
                             {tenant.name}
-                          </button>
+                          </span>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {tenant.owner_email ?? "Sin email"}
