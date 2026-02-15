@@ -18,9 +18,6 @@ export function PWAInstallPrompt() {
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  // Don't show on the landing page
-  if (pathname === "/landing") return null;
-
   useEffect(() => {
     // Don't show if already installed as standalone
     if (window.matchMedia("(display-mode: standalone)").matches) return;
@@ -63,6 +60,9 @@ export function PWAInstallPrompt() {
     setShowIOSGuide(false);
     sessionStorage.setItem("pwa-install-dismissed", "true");
   };
+
+  // Don't show on the landing page
+  if (pathname === "/landing") return null;
 
   if (dismissed) return null;
 
