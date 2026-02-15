@@ -97,7 +97,7 @@ export default function AcceptInvite() {
       await refetch();
       navigate("/");
     } catch (err) {
-      console.error("Error accepting invite:", err);
+      void err;
       toast.error("Error al aceptar la invitacion");
     } finally {
       setAccepting(false);
@@ -140,7 +140,7 @@ export default function AcceptInvite() {
       await new Promise((r) => setTimeout(r, 500));
       await acceptInvite();
     } catch (err) {
-      console.error("Error signing up:", err);
+      void err;
       toast.error("Error al crear la cuenta");
     } finally {
       setAccepting(false);
@@ -171,7 +171,7 @@ export default function AcceptInvite() {
       await new Promise((r) => setTimeout(r, 500));
       await acceptInvite();
     } catch (err) {
-      console.error("Error logging in:", err);
+      void err;
       toast.error("Error al iniciar sesion");
       setAccepting(false);
     }

@@ -55,7 +55,7 @@ export default function ConfirmAppointment() {
         });
 
         if (rpcError) {
-          console.error("RPC error:", rpcError);
+          void rpcError;
           setError("No se pudo cargar la cita. El link puede ser invalido o la cita ya paso.");
           return;
         }
@@ -74,7 +74,7 @@ export default function ConfirmAppointment() {
           setResponseStatus('cancelled');
         }
       } catch (err) {
-        console.error("Error fetching appointment:", err);
+        void err;
         setError("Error de conexion. Verifica tu internet.");
       } finally {
         setLoading(false);
@@ -96,7 +96,7 @@ export default function ConfirmAppointment() {
       });
 
       if (rpcError) {
-        console.error("Response error:", rpcError);
+        void rpcError;
         setError("Error al procesar tu respuesta. Intenta de nuevo.");
         setResponseStatus('idle');
         return;
@@ -116,7 +116,7 @@ export default function ConfirmAppointment() {
         setAppointment(prev => prev ? { ...prev, status: data.new_status } : null);
       }
     } catch (err) {
-      console.error("Error responding to appointment:", err);
+      void err;
       setError("Error de conexion. Intenta de nuevo.");
       setResponseStatus('idle');
     }

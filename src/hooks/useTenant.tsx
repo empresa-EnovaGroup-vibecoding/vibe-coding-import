@@ -95,7 +95,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // Verificar si es super_admin
       const { data: superAdminData, error: saError } = await supabase
         .rpc("is_super_admin", { _user_id: user.id });
-      if (saError) console.error("Error checking super_admin:", saError);
+      if (saError) void saError;
       setIsSuperAdmin(superAdminData === true);
 
       // Obtener membresías del usuario (tenants a los que pertenece)
@@ -113,7 +113,6 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         .eq("user_id", user.id);
 
       if (error) {
-        console.error("Error fetching tenant memberships:", error);
         setMemberships([]);
       } else if (memberData) {
         const formatted: TenantMembership[] = memberData
@@ -161,8 +160,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       } else {
         setImpersonatedTenant(null);
       }
-    } catch (err) {
-      console.error("Error in tenant data fetch:", err);
+    } catch {
+      // Silent fail - tenant data will retry on next render
     } finally {
       setLoading(false);
     }

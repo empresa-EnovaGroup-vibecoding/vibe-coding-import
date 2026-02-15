@@ -33,13 +33,11 @@ export function useUserRole(): UseUserRoleReturn {
         .maybeSingle();
 
       if (error) {
-        console.error("Error fetching user role:", error);
         setRole(null);
       } else {
         setRole(data?.role as AppRole | null);
       }
-    } catch (err) {
-      console.error("Error fetching user role:", err);
+    } catch {
       setRole(null);
     } finally {
       setLoading(false);

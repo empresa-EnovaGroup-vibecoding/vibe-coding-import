@@ -117,11 +117,10 @@ export default function DynamicEvaluationDetail({
         .eq("evaluation_id", evaluationId);
 
       if (error) {
-        console.error("Error loading products:", error);
         return [];
       }
 
-      return (data || []).map((d: any) => ({
+      return (data || []).map((d: Record<string, unknown>) => ({
         product_id: d.product_id,
         notes: d.notes,
         inventory: Array.isArray(d.inventory) ? d.inventory[0] ?? null : d.inventory ?? null,
@@ -233,7 +232,7 @@ export default function DynamicEvaluationDetail({
         );
 
       case "select":
-      case "radio":
+      case "radio": {
         if (!field.options) return null;
         const selectedOption = field.options.find(
           (opt) => opt.value === value
@@ -249,6 +248,7 @@ export default function DynamicEvaluationDetail({
             </p>
           </div>
         );
+      }
 
       default:
         return null;
