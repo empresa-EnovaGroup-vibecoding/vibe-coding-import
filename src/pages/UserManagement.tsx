@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useNavigate } from "react-router-dom";
@@ -48,14 +48,7 @@ export default function UserManagement() {
     }
   }, [isOwner, roleLoading, navigate]);
 
-  useEffect(() => {
-    if (isOwner && tenantId) {
-      fetchMembers();
-      fetchInvites();
-    }
-  }, [isOwner, tenantId]);
-
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     try {
       if (!tenantId) return;
 
@@ -74,14 +67,14 @@ export default function UserManagement() {
       }));
 
       setMembers(formattedMembers);
-    } catch (error: unknown) {
+    } catch {
       toast.error("Error al cargar miembros");
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantId]);
 
-  const fetchInvites = async () => {
+  const fetchInvites = useCallback(async () => {
     try {
       if (!tenantId) return;
       const { data, error } = await supabase
@@ -92,10 +85,17 @@ export default function UserManagement() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       setInvites(data || []);
-    } catch (error: unknown) {
+    } catch {
       toast.error("Error al cargar invitaciones");
     }
-  };
+  }, [tenantId]);
+
+  useEffect(() => {
+    if (isOwner && tenantId) {
+      fetchMembers();
+      fetchInvites();
+    }
+  }, [isOwner, tenantId, fetchMembers, fetchInvites]);
 
   const cancelInvite = async (inviteId: string) => {
     const { error } = await supabase

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save, ClipboardList, Gift, Pencil, DollarSign, TrendingUp, Scissors } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, FileText, Calendar, Clock, ShoppingBag, Save, ClipboardList, Gift, Pencil } from "lucide-react";
 import { toTitleCase } from "@/lib/utils";
 import { toast } from "sonner";
 import { EvaluationHistoryList } from "./EvaluationHistoryList";
@@ -14,6 +14,7 @@ import DynamicEvaluationDetail from "./DynamicEvaluationDetail";
 import { ClientPackages } from "./ClientPackages";
 import { EditClientDialog } from "./EditClientDialog";
 import { ClientAppointmentCard, formatDate } from "./ClientAppointmentCard";
+import { ClientSummaryStats } from "./ClientSummaryStats";
 
 interface Client {
   id: string;
@@ -202,45 +203,12 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
       />
 
       {/* Client Summary Stats */}
-      {(() => {
-        const { totalSpent, totalVisits, lastVisit, topService } = clientStats;
-        return (
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <DollarSign className="h-4 w-4" />
-                <span className="text-xs font-medium">Total Gastado</span>
-              </div>
-              <p className="text-xl font-bold text-foreground">Q{totalSpent.toFixed(2)}</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <TrendingUp className="h-4 w-4" />
-                <span className="text-xs font-medium">Visitas</span>
-              </div>
-              <p className="text-xl font-bold text-foreground">{totalVisits}</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Calendar className="h-4 w-4" />
-                <span className="text-xs font-medium">Ultima Visita</span>
-              </div>
-              <p className="text-sm font-bold text-foreground">
-                {lastVisit ? formatDate(lastVisit, "d MMM yyyy") : "Sin visitas"}
-              </p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Scissors className="h-4 w-4" />
-                <span className="text-xs font-medium">Servicio Favorito</span>
-              </div>
-              <p className="text-sm font-bold text-foreground truncate">
-                {topService ? `${topService[0]} (${topService[1]}x)` : "N/A"}
-              </p>
-            </div>
-          </div>
-        );
-      })()}
+      <ClientSummaryStats
+        totalSpent={clientStats.totalSpent}
+        totalVisits={clientStats.totalVisits}
+        lastVisit={clientStats.lastVisit ?? null}
+        topService={clientStats.topService}
+      />
 
       {/* Main Tabs: General Data vs Clinical History */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
