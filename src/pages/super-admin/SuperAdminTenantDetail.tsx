@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { TenantActionButtons } from "@/components/super-admin/TenantActionButtons";
+import { TenantEditDialog } from "@/components/super-admin/TenantEditDialog";
+import { TenantNotes } from "@/components/super-admin/TenantNotes";
 import {
   ArrowLeft,
   Building2,
@@ -228,6 +230,28 @@ export function SuperAdminTenantDetail() {
     },
   });
 
+  // Mutation: edit tenant info
+  const editTenantMutation = useMutation({
+    mutationFn: async (data: { name: string; phone: string; address: string }) => {
+      const { error } = await supabase
+        .from("tenants")
+        .update({
+          name: data.name,
+          phone: data.phone || null,
+          address: data.address || null,
+        } as Record<string, unknown>)
+        .eq("id", tenantId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["super-admin"] });
+      toast.success("Informacion actualizada");
+    },
+    onError: (error) => {
+      toast.error("Error: " + (error as Error).message);
+    },
+  });
+
   const handleImpersonate = () => {
     if (!tenant) return;
     localStorage.setItem("impersonate_tenant_id", tenant.id);
@@ -310,8 +334,13 @@ export function SuperAdminTenantDetail() {
       {/* Info + Health */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Informacion del Negocio</CardTitle>
+            <TenantEditDialog
+              tenant={tenant}
+              onSave={(data) => editTenantMutation.mutate(data)}
+              isSaving={editTenantMutation.isPending}
+            />
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-y-3 text-sm">
@@ -474,6 +503,8 @@ export function SuperAdminTenantDetail() {
           )}
         </CardContent>
       </Card>
+      {/* Support Notes */}
+      <TenantNotes tenantId={tenant.id} />
     </div>
   );
 }

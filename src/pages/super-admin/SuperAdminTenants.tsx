@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, CheckCircle2, XCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 type SubscriptionStatus = "trial" | "active" | "past_due" | "cancelled" | "expired";
 
@@ -39,9 +39,17 @@ type StatusFilter = "all" | SubscriptionStatus;
  */
 export function SuperAdminTenants() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
+  // Read initial filter from URL (?status=active, ?status=trial, etc.)
+  const initialStatus = (searchParams.get("status") as StatusFilter) ?? "all";
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+    ["all", "active", "trial", "expired", "past_due", "cancelled"].includes(initialStatus)
+      ? initialStatus
+      : "all"
+  );
 
   // Query: Obtener todos los tenants
   const { data: tenants, isLoading } = useQuery({
@@ -152,7 +160,15 @@ export function SuperAdminTenants() {
           />
 
           {/* Status Tabs */}
-          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+          <Tabs value={statusFilter} onValueChange={(v) => {
+            const filter = v as StatusFilter;
+            setStatusFilter(filter);
+            if (filter === "all") {
+              setSearchParams({});
+            } else {
+              setSearchParams({ status: filter });
+            }
+          }}>
             <TabsList>
               <TabsTrigger value="all">Todos</TabsTrigger>
               <TabsTrigger value="active">Activos</TabsTrigger>
