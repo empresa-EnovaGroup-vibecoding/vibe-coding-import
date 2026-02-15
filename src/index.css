@@ -183,7 +183,6 @@
 /* PWA standalone sidebar fix - only when app is installed */
 @media (display-mode: standalone) {
   .pwa-safe-sidebar {
-    height: 100dvh;
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
