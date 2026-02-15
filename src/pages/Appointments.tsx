@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/audit";
@@ -64,6 +64,7 @@ export default function Appointments() {
     cabin_id: "",
   });
   const [now, setNow] = useState(new Date());
+  const alertedRef = useRef<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   // Update current time every minute for upcoming appointment alerts
@@ -125,9 +126,13 @@ export default function Appointments() {
     upcomingAppointments.forEach((apt) => {
       const minutesUntil = differenceInMinutes(new Date(apt.start_time), now);
       if (minutesUntil === 60 || minutesUntil === 30 || minutesUntil === 15) {
-        toast.warning(`Alerta: Cita con ${apt.clients?.name} en ${minutesUntil} minutos`, {
-          duration: 10000,
-        });
+        const alertKey = `${apt.id}-${minutesUntil}`;
+        if (!alertedRef.current.has(alertKey)) {
+          alertedRef.current.add(alertKey);
+          toast.warning(`Alerta: Cita con ${apt.clients?.name} en ${minutesUntil} minutos`, {
+            duration: 10000,
+          });
+        }
       }
     });
   }, [appointments, now]);
@@ -219,32 +224,21 @@ export default function Appointments() {
 
       if (updateError) throw updateError;
 
-      // Replace appointment_services: delete old, insert new
-      const { error: deleteServicesError } = await supabase
-        .from("appointment_services")
-        .delete()
-        .eq("appointment_id", id)
-        .eq("tenant_id", tenantId);
+      // Atomic replacement of appointment_services (prevents data loss if insert fails)
+      const servicesPayload = data.selectedServices.map(serviceId => {
+        const service = services?.find(s => s.id === serviceId);
+        return { service_id: serviceId, price_at_time: service?.price || 0 };
+      });
 
-      if (deleteServicesError) throw deleteServicesError;
-
-      if (data.selectedServices.length > 0) {
-        const appointmentServices = data.selectedServices.map(serviceId => {
-          const service = services?.find(s => s.id === serviceId);
-          return {
-            appointment_id: id,
-            service_id: serviceId,
-            price_at_time: service?.price || 0,
-            tenant_id: tenantId,
-          };
-        });
-
-        const { error: insertServicesError } = await supabase
-          .from("appointment_services")
-          .insert(appointmentServices);
-
-        if (insertServicesError) throw insertServicesError;
-      }
+      const { error: replaceError } = await supabase.rpc(
+        "replace_appointment_services",
+        {
+          p_appointment_id: id,
+          p_tenant_id: tenantId,
+          p_services: servicesPayload,
+        }
+      );
+      if (replaceError) throw replaceError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments", undefined, tenantId] });

@@ -16,6 +16,7 @@ import {
 import { Plus, Package, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useTenant } from "@/hooks/useTenant";
 import { PackageFormDialog } from "./PackageFormDialog";
 
 interface PackageData {
@@ -31,31 +32,35 @@ interface PackageData {
 }
 
 export function PackageList() {
+  const { tenantId } = useTenant();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState<PackageData | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PackageData | null>(null);
   const queryClient = useQueryClient();
 
   const { data: packages, isLoading } = useQuery({
-    queryKey: ["packages"],
+    queryKey: ["packages", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("packages")
         .select(`*, services(name)`)
+        .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as PackageData[];
     },
+    enabled: !!tenantId,
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("packages").delete().eq("id", id);
+      const { error } = await supabase.from("packages").delete().eq("id", id).eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["packages"] });
+      queryClient.invalidateQueries({ queryKey: ["packages", tenantId] });
       toast.success("Paquete eliminado");
       setDeleteTarget(null);
     },

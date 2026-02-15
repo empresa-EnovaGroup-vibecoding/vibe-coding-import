@@ -246,6 +246,14 @@ export default function Inventory() {
       toast.error("El nombre es requerido");
       return;
     }
+    if (isNaN(parseFloat(formData.sale_price)) || parseFloat(formData.sale_price) < 0) {
+      toast.error("El precio de venta debe ser un numero valido");
+      return;
+    }
+    if (isNaN(parseInt(formData.stock_level)) || parseInt(formData.stock_level) < 0) {
+      toast.error("El stock debe ser un numero valido");
+      return;
+    }
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data: formData });
     } else {

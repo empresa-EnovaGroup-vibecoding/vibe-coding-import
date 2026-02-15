@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -102,12 +102,35 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
     },
   });
 
-  const futureAppointments = appointments?.filter(
-    (apt) => new Date(apt.start_time) >= new Date()
+  const futureAppointments = useMemo(() =>
+    appointments?.filter((apt) => new Date(apt.start_time) >= new Date()),
+    [appointments]
   );
-  const pastAppointments = appointments?.filter(
-    (apt) => new Date(apt.start_time) < new Date()
+  const pastAppointments = useMemo(() =>
+    appointments?.filter((apt) => new Date(apt.start_time) < new Date()),
+    [appointments]
   );
+
+  const clientStats = useMemo(() => {
+    const completedAppointments = appointments?.filter(a => a.status === "completed") || [];
+    const totalAppointmentSpend = completedAppointments.reduce((sum, a) => sum + Number(a.total_price), 0);
+    const totalSalesSpend = sales?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
+    const totalSpent = totalAppointmentSpend + totalSalesSpend;
+    const totalVisits = completedAppointments.length;
+    const lastVisit = completedAppointments[0]?.start_time;
+
+    const serviceCounts: Record<string, number> = {};
+    completedAppointments.forEach(a => {
+      a.appointment_services?.forEach((s: { services: { name: string } | null }) => {
+        const name = s.services?.name;
+        if (name) serviceCounts[name] = (serviceCounts[name] || 0) + 1;
+      });
+    });
+    const sortedServices = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1]);
+    const topService = sortedServices.length > 0 ? sortedServices[0] : null;
+
+    return { totalSpent, totalVisits, lastVisit, topService };
+  }, [appointments, sales]);
 
   // Handle sub-views for evaluations
   if (viewMode === "selectFormType") {
@@ -180,24 +203,7 @@ export function ClientDetail({ client, onBack }: ClientDetailProps) {
 
       {/* Client Summary Stats */}
       {(() => {
-        const completedAppointments = appointments?.filter(a => a.status === "completed") || [];
-        const totalAppointmentSpend = completedAppointments.reduce((sum, a) => sum + Number(a.total_price), 0);
-        const totalSalesSpend = sales?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-        const totalSpent = totalAppointmentSpend + totalSalesSpend;
-        const totalVisits = completedAppointments.length;
-        const lastVisit = completedAppointments[0]?.start_time;
-
-        // Find most used service
-        const serviceCounts: Record<string, number> = {};
-        completedAppointments.forEach(a => {
-          a.appointment_services?.forEach((s: { services: { name: string } | null }) => {
-            const name = s.services?.name;
-            if (name) serviceCounts[name] = (serviceCounts[name] || 0) + 1;
-          });
-        });
-        const sortedServices = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1]);
-        const topService = sortedServices.length > 0 ? sortedServices[0] : null;
-
+        const { totalSpent, totalVisits, lastVisit, topService } = clientStats;
         return (
           <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
             <div className="rounded-xl border border-border bg-card p-4 shadow-sm">

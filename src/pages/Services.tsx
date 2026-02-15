@@ -236,6 +236,14 @@ export default function Services() {
       toast.error("El nombre es requerido");
       return;
     }
+    if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) < 0) {
+      toast.error("El precio debe ser un numero valido");
+      return;
+    }
+    if (isNaN(parseInt(formData.duration)) || parseInt(formData.duration) <= 0) {
+      toast.error("La duracion debe ser un numero mayor a 0");
+      return;
+    }
     if (editingService) {
       updateMutation.mutate({ id: editingService.id, data: formData });
     } else {
