@@ -116,7 +116,7 @@ export function AppSidebar() {
       {mobileOpen && <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setMobileOpen(false)} />}
 
       {/* Sidebar */}
-      <aside className={cn("fixed left-0 top-0 z-40 h-screen w-64 bg-white dark:bg-neutral-950 border-r border-black/[0.06] dark:border-white/10 transition-transform duration-300 lg:translate-x-0", mobileOpen ? "translate-x-0" : "-translate-x-full")}>
+      <aside className={cn("fixed left-0 top-0 z-40 h-screen h-[100dvh] w-64 bg-white dark:bg-neutral-950 border-r border-black/[0.06] dark:border-white/10 transition-transform duration-300 lg:translate-x-0 pb-[env(safe-area-inset-bottom)]", mobileOpen ? "translate-x-0" : "-translate-x-full")}>
         <div className="flex h-full flex-col">
           {/* Logo / Brand */}
           <div className="flex h-16 items-center gap-3 border-b border-black/[0.06] dark:border-white/10 px-6">
