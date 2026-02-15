@@ -108,7 +108,7 @@ export function AppSidebar() {
 
   return <>
       {/* Mobile menu button */}
-      <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 lg:hidden bg-card shadow-md" onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? "Cerrar menu" : "Abrir menu"} aria-expanded={mobileOpen}>
+      <Button variant="ghost" size="icon" className="fixed top-3 left-3 z-50 lg:hidden bg-card shadow-md h-11 w-11" onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? "Cerrar menu" : "Abrir menu"} aria-expanded={mobileOpen}>
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 

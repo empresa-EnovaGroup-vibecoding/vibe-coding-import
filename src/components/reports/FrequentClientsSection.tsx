@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
 import {
@@ -23,7 +24,7 @@ interface FrequentClientsSectionProps {
   isLoading: boolean;
 }
 
-export function FrequentClientsSection({ data, isLoading }: FrequentClientsSectionProps) {
+export const FrequentClientsSection = memo(function FrequentClientsSection({ data, isLoading }: FrequentClientsSectionProps) {
   if (isLoading) {
     return (
       <Card>
@@ -125,4 +126,4 @@ export function FrequentClientsSection({ data, isLoading }: FrequentClientsSecti
       </Card>
     </>
   );
-}
+});

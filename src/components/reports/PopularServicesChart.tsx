@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scissors } from "lucide-react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
@@ -21,7 +22,7 @@ interface PopularServicesChartProps {
   isLoading: boolean;
 }
 
-export function PopularServicesChart({ data, isLoading }: PopularServicesChartProps) {
+export const PopularServicesChart = memo(function PopularServicesChart({ data, isLoading }: PopularServicesChartProps) {
   return (
     <Card>
       <CardHeader>
@@ -68,4 +69,4 @@ export function PopularServicesChart({ data, isLoading }: PopularServicesChartPr
       </CardContent>
     </Card>
   );
-}
+});

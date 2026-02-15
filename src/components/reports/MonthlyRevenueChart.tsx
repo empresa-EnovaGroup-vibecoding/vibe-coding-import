@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 import {
@@ -26,7 +27,7 @@ interface MonthlyRevenueChartProps {
   isLoading: boolean;
 }
 
-export function MonthlyRevenueChart({ data, isLoading }: MonthlyRevenueChartProps) {
+export const MonthlyRevenueChart = memo(function MonthlyRevenueChart({ data, isLoading }: MonthlyRevenueChartProps) {
   return (
     <Card className="lg:col-span-3">
       <CardHeader>
@@ -72,4 +73,4 @@ export function MonthlyRevenueChart({ data, isLoading }: MonthlyRevenueChartProp
       </CardContent>
     </Card>
   );
-}
+});

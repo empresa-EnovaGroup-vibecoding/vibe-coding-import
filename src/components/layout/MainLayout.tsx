@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { TrialBanner } from "./TrialBanner";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 const ContentLoader = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -59,7 +60,8 @@ export function MainLayout({ children }: MainLayoutProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [tenantId, queryClient]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId]);
 
   return (
     <div className="min-h-screen">
@@ -70,9 +72,11 @@ export function MainLayout({ children }: MainLayoutProps) {
       <main id="main-content" className="lg:pl-64">
         <TrialBanner />
         <div className="min-h-screen p-4 lg:p-8">
-          <Suspense fallback={<ContentLoader />}>
-            {children}
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<ContentLoader />}>
+              {children}
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </main>
     </div>

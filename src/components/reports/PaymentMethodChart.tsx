@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard } from "lucide-react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
@@ -18,7 +19,7 @@ interface PaymentMethodChartProps {
   methodBreakdown: Record<string, number> | undefined;
 }
 
-export function PaymentMethodChart({ methodBreakdown }: PaymentMethodChartProps) {
+export const PaymentMethodChart = memo(function PaymentMethodChart({ methodBreakdown }: PaymentMethodChartProps) {
   if (!methodBreakdown) {
     return (
       <Card>
@@ -82,4 +83,4 @@ export function PaymentMethodChart({ methodBreakdown }: PaymentMethodChartProps)
       </CardContent>
     </Card>
   );
-}
+});
