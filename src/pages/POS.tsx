@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { QRScanner } from "@/components/pos/QRScanner";
 import { POSProductGrid } from "@/components/pos/POSProductGrid";
 import { POSCart } from "@/components/pos/POSCart";
 import { QrCode } from "lucide-react";
+
+const QRScanner = lazy(() => import("@/components/pos/QRScanner").then(m => ({ default: m.QRScanner })));
 import { toast } from "sonner";
 import { toTitleCase } from "@/lib/utils";
 import { useTenant } from "@/hooks/useTenant";
@@ -305,11 +306,15 @@ export default function POS() {
         />
       </div>
 
-      <QRScanner
-        isOpen={isScannerOpen}
-        onOpenChange={setIsScannerOpen}
-        onScan={handleQRScan}
-      />
+      {isScannerOpen && (
+        <Suspense fallback={null}>
+          <QRScanner
+            isOpen={isScannerOpen}
+            onOpenChange={setIsScannerOpen}
+            onScan={handleQRScan}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

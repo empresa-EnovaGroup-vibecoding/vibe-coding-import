@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Link } from "lucide-react";
 import FileUploadTab from "@/components/inventory/FileUploadTab";
-import GoogleSheetsTab from "@/components/inventory/GoogleSheetsTab";
+
+const GoogleSheetsTab = lazy(() => import("@/components/inventory/GoogleSheetsTab"));
 import ServiceColumnMappingStep from "./ServiceColumnMappingStep";
 import ServiceImportPreviewStep from "./ServiceImportPreviewStep";
 
@@ -163,7 +164,9 @@ export default function ServicesImportModal({
               <FileUploadTab onDataParsed={handleDataParsed} />
             </TabsContent>
             <TabsContent value="sheets" className="mt-4">
-              <GoogleSheetsTab onDataParsed={handleDataParsed} />
+              <Suspense fallback={<div className="h-32 bg-muted animate-pulse rounded-lg" />}>
+                <GoogleSheetsTab onDataParsed={handleDataParsed} />
+              </Suspense>
             </TabsContent>
           </Tabs>
         )}
