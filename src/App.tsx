@@ -13,6 +13,8 @@ import { RequireSubscription } from "@/components/auth/RequireSubscription";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SuperAdminLayout } from "@/components/super-admin/SuperAdminLayout";
 import { Loader2 } from "lucide-react";
+import { ReloadPrompt } from "@/components/pwa/ReloadPrompt";
+import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 
 // Paginas criticas (carga inmediata)
 import Index from "./pages/Index";
@@ -372,6 +374,8 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    <ReloadPrompt />
+    <PWAInstallPrompt />
   </QueryClientProvider>
 );
 
