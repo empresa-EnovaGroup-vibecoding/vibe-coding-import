@@ -15,16 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { InventoryBulkDeleteDialog } from "@/components/inventory/InventoryBulkDeleteDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Package, Search, Pencil, Trash2, FileUp } from "lucide-react";
 import InventoryImportModal from "@/components/inventory/InventoryImportModal";
@@ -476,27 +467,13 @@ export default function Inventory() {
         />
       </div>
 
-      {/* Bulk delete confirmation */}
-      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar {selectedIds.size} producto(s)</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta accion no se puede deshacer. Se eliminaran permanentemente los productos seleccionados del inventario.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => bulkDeleteMutation.mutate([...selectedIds])}
-              disabled={bulkDeleteMutation.isPending}
-            >
-              {bulkDeleteMutation.isPending ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <InventoryBulkDeleteDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        count={selectedIds.size}
+        isPending={bulkDeleteMutation.isPending}
+        onConfirm={() => bulkDeleteMutation.mutate([...selectedIds])}
+      />
     </div>
   );
 }

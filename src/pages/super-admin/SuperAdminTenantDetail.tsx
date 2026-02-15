@@ -1,13 +1,14 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { TenantActionButtons } from "@/components/super-admin/TenantActionButtons";
 import { TenantEditDialog } from "@/components/super-admin/TenantEditDialog";
 import { TenantNotes } from "@/components/super-admin/TenantNotes";
+import { TenantHealthCard } from "@/components/super-admin/TenantHealthCard";
+import { TenantRecentActivity } from "@/components/super-admin/TenantRecentActivity";
 import {
   ArrowLeft,
   Building2,
@@ -19,9 +20,6 @@ import {
   Warehouse,
   UserCheck,
   DoorOpen,
-  Clock,
-  AlertTriangle,
-  TrendingUp,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -265,13 +263,6 @@ export function SuperAdminTenantDetail() {
     navigate("/");
   };
 
-  const getHealthScore = (s: UsageStats): { label: string; color: string; icon: typeof TrendingUp } => {
-    const totalActivity = s.clients + s.appointments + s.services + s.inventory;
-    if (totalActivity === 0) return { label: "Sin actividad", color: "text-red-500", icon: AlertTriangle };
-    if (totalActivity < 5) return { label: "Actividad baja", color: "text-yellow-500", icon: Clock };
-    return { label: "Activo", color: "text-green-500", icon: TrendingUp };
-  };
-
   if (loadingTenant) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -291,7 +282,6 @@ export function SuperAdminTenantDetail() {
     );
   }
 
-  const health = stats ? getHealthScore(stats) : null;
   const statusCfg = statusConfig[tenant.subscription_status];
 
   const statCards = [
@@ -400,58 +390,7 @@ export function SuperAdminTenantDetail() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Salud del Negocio</CardTitle>
-            <CardDescription>Basado en el uso de la plataforma</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loadingStats ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : health ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <health.icon className={`h-8 w-8 ${health.color}`} />
-                  <div>
-                    <p className={`text-xl font-bold ${health.color}`}>{health.label}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {stats!.clients + stats!.appointments + stats!.services + stats!.inventory} acciones totales
-                    </p>
-                  </div>
-                </div>
-                <Separator />
-                <div className="text-sm space-y-2">
-                  {stats!.clients === 0 && stats!.appointments === 0 ? (
-                    <div className="flex items-center gap-2 text-red-500">
-                      <AlertTriangle className="h-4 w-4" />
-                      <span>No ha creado clientes ni citas - riesgo de abandono</span>
-                    </div>
-                  ) : stats!.appointments === 0 ? (
-                    <div className="flex items-center gap-2 text-yellow-500">
-                      <Clock className="h-4 w-4" />
-                      <span>Tiene clientes pero no ha agendado citas</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-green-500">
-                      <TrendingUp className="h-4 w-4" />
-                      <span>Negocio activo con clientes y citas</span>
-                    </div>
-                  )}
-                  {stats!.inventory === 0 && (
-                    <p className="text-muted-foreground">No ha cargado inventario todavia</p>
-                  )}
-                  {stats!.sales > 0 && (
-                    <p className="text-green-600 font-medium">
-                      Ya esta generando ventas ({stats!.sales} registradas)
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
+        <TenantHealthCard stats={stats} isLoading={loadingStats} />
       </div>
 
       {/* Usage Stats Grid */}
@@ -475,40 +414,7 @@ export function SuperAdminTenantDetail() {
       </div>
 
       {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Actividad Reciente</CardTitle>
-          <CardDescription>Ultimas 5 citas registradas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {recentAppointments && recentAppointments.length > 0 ? (
-            <div className="space-y-3">
-              {recentAppointments.map((apt) => (
-                <div key={apt.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div>
-                    <p className="font-medium text-sm">{apt.client_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(apt.start_time).toLocaleString("es-ES", {
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {apt.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No hay citas registradas
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <TenantRecentActivity appointments={recentAppointments} />
       {/* Support Notes */}
       <TenantNotes tenantId={tenant.id} />
     </div>
