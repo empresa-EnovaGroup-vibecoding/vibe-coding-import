@@ -88,7 +88,7 @@ export function QRScanner({ onScan, isOpen, onOpenChange }: QRScannerProps) {
           <div
             id="qr-reader"
             ref={containerRef}
-            className="w-full aspect-square bg-muted rounded-lg overflow-hidden"
+            className="w-full aspect-square max-h-[60vh] bg-muted rounded-lg overflow-hidden"
           />
           <p className="text-sm text-muted-foreground text-center">
             Apunta la cámara al código QR del producto

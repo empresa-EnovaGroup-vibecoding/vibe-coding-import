@@ -10,15 +10,18 @@ export function TrialBanner() {
   const [now, setNow] = useState(new Date());
   const [dismissed, setDismissed] = useState(false);
 
-  // Tick every minute to update countdown
+  const isTrialActive = subscriptionStatus === "trial" && !!tenant && daysLeftInTrial !== null;
+
+  // Only tick when trial is active and banner visible
   useEffect(() => {
+    if (!isTrialActive || dismissed) return;
     const interval = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isTrialActive, dismissed]);
 
   // Only show during trial
   if (dismissed) return null;
-  if (subscriptionStatus !== "trial" || !tenant || daysLeftInTrial === null) return null;
+  if (!isTrialActive) return null;
 
   // Calculate hours remaining
   const trialEnd = new Date(tenant.trial_ends_at);

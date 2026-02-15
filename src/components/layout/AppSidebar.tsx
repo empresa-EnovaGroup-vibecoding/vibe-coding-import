@@ -124,6 +124,7 @@ export function AppSidebar() {
               <img
                 src={tenant.logo_url}
                 alt={tenant.name}
+                loading="lazy"
                 className="h-9 w-9 rounded-lg object-cover"
               />
             ) : (
