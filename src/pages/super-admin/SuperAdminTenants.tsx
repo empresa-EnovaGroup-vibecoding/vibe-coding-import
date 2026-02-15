@@ -197,14 +197,15 @@ export function SuperAdminTenants() {
                 <TableBody>
                   {filteredTenants && filteredTenants.length > 0 ? (
                     filteredTenants.map((tenant) => (
-                      <TableRow key={tenant.id}>
+                      <TableRow
+                        key={tenant.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => navigate(`/super-admin/tenants/${tenant.id}`)}
+                      >
                         <TableCell>
-                          <button
-                            className="font-medium text-left hover:underline hover:text-primary transition-colors"
-                            onClick={() => navigate(`/super-admin/tenants/${tenant.id}`)}
-                          >
+                          <span className="font-medium text-primary">
                             {tenant.name}
-                          </button>
+                          </span>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {tenant.slug}
@@ -223,7 +224,7 @@ export function SuperAdminTenants() {
                           {new Date(tenant.created_at).toLocaleDateString("es-ES")}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                             {/* Activar/Suspender */}
                             {tenant.subscription_status === "expired" ||
                             tenant.subscription_status === "cancelled" ? (
