@@ -35,6 +35,9 @@ interface TenantContextType {
   isStaff: boolean;
   // Super admin
   isSuperAdmin: boolean;
+  // Impersonacion
+  isImpersonating: boolean;
+  stopImpersonating: () => void;
   // Suscripcion del tenant
   subscriptionStatus: SubscriptionStatus | null;
   hasPremium: boolean;
@@ -57,12 +60,17 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 const ACTIVE_TENANT_KEY = "active_tenant_id";
+const IMPERSONATE_KEY = "impersonate_tenant_id";
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [memberships, setMemberships] = useState<TenantMembership[]>([]);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(
     () => localStorage.getItem(ACTIVE_TENANT_KEY)
+  );
+  const [impersonatedTenant, setImpersonatedTenant] = useState<Tenant | null>(null);
+  const [impersonateId, setImpersonateId] = useState<string | null>(
+    () => localStorage.getItem(IMPERSONATE_KEY)
   );
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -132,12 +140,30 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           }
         }
       }
+      // Si es super admin e impersonate esta activo, cargar ese tenant directamente
+      if (superAdminData === true && impersonateId) {
+        const { data: impTenant, error: impError } = await supabase
+          .from("tenants")
+          .select("id, name, slug, phone, address, logo_url, subscription_status, trial_ends_at, plan_type, current_period_end, business_hours")
+          .eq("id", impersonateId)
+          .single();
+        if (!impError && impTenant) {
+          setImpersonatedTenant(impTenant as unknown as Tenant);
+        } else {
+          // Tenant no encontrado, limpiar impersonacion
+          localStorage.removeItem(IMPERSONATE_KEY);
+          setImpersonateId(null);
+          setImpersonatedTenant(null);
+        }
+      } else {
+        setImpersonatedTenant(null);
+      }
     } catch (err) {
       console.error("Error in tenant data fetch:", err);
     } finally {
       setLoading(false);
     }
-  }, [user, authLoading, activeTenantId]);
+  }, [user, authLoading, activeTenantId, impersonateId]);
 
   useEffect(() => {
     fetchTenantData();
@@ -164,10 +190,18 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return () => { supabase.removeChannel(channel); };
   }, [activeTenantId, fetchTenantData]);
 
-  // Derivar datos del tenant activo
+  const isImpersonating = isSuperAdmin && !!impersonatedTenant;
+
+  const stopImpersonating = useCallback(() => {
+    localStorage.removeItem(IMPERSONATE_KEY);
+    setImpersonateId(null);
+    setImpersonatedTenant(null);
+  }, []);
+
+  // Derivar datos del tenant activo (impersonacion tiene prioridad)
   const activeMembership = memberships.find((m) => m.tenant_id === activeTenantId);
-  const tenant = activeMembership?.tenant ?? null;
-  const role = activeMembership?.role ?? null;
+  const tenant = isImpersonating ? impersonatedTenant : (activeMembership?.tenant ?? null);
+  const role: TenantRole | null = isImpersonating ? "owner" : (activeMembership?.role ?? null);
 
   // Calcular estado de suscripcion
   let computedStatus: SubscriptionStatus | null = null;
@@ -192,7 +226,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const hasPremium = computedStatus === "active" || computedStatus === "trial";
+  const hasPremium = isImpersonating || computedStatus === "active" || computedStatus === "trial";
 
   const setActiveTenant = useCallback((tenantId: string) => {
     setActiveTenantId(tenantId);
@@ -213,11 +247,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     <TenantContext.Provider
       value={{
         tenant,
-        tenantId: activeTenantId,
+        tenantId: isImpersonating ? impersonatedTenant!.id : activeTenantId,
         role,
         isOwner: role === "owner",
         isStaff: role === "staff",
         isSuperAdmin,
+        isImpersonating,
+        stopImpersonating,
         subscriptionStatus: computedStatus,
         hasPremium,
         daysLeftInTrial,

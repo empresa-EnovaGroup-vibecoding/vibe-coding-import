@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +56,7 @@ export function TenantActionButtons({
   isDeleting,
   onImpersonate,
 }: TenantActionButtonsProps) {
+  const { monthlyPrice, annualPrice } = usePlatformSettings();
   const [activateOpen, setActivateOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>("monthly");
   const [extendOpen, setExtendOpen] = useState(false);
@@ -85,11 +88,10 @@ export function TenantActionButtons({
 
   const handleWhatsApp = () => {
     const phone = tenant.phone?.replace(/\D/g, "");
-    if (phone) {
+    if (phone && phone.length >= 8) {
       window.open(`https://wa.me/${phone}`, "_blank");
-    } else if (ownerEmail) {
-      // Fallback: search by email context
-      window.open(`https://wa.me/?text=Hola, te contacto desde Agenda PRO respecto a tu negocio "${tenant.name}"`, "_blank");
+    } else {
+      toast.error("Este negocio no tiene telefono registrado");
     }
   };
 
@@ -119,8 +121,8 @@ export function TenantActionButtons({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="monthly">Mensual ($49/mes) - Vence en 1 mes</SelectItem>
-                    <SelectItem value="annual">Anual ($399/ano) - Vence en 12 meses</SelectItem>
+                    <SelectItem value="monthly">Mensual (${monthlyPrice}/mes) - Vence en 1 mes</SelectItem>
+                    <SelectItem value="annual">Anual (${annualPrice}/ano) - Vence en 12 meses</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

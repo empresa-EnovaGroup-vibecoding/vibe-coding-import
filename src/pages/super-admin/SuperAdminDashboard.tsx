@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { Building2, CheckCircle2, Clock, DollarSign, Loader2, AlertTriangle, Users } from "lucide-react";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 
 type SubscriptionStatus = "trial" | "active" | "past_due" | "cancelled" | "expired";
 
@@ -24,6 +25,7 @@ interface Tenant {
 
 export function SuperAdminDashboard() {
   const navigate = useNavigate();
+  const { monthlyPrice } = usePlatformSettings();
 
   // Query: All tenants with owner email (single efficient query)
   const { data: allTenants, isLoading: loadingTenants } = useQuery({
@@ -51,7 +53,7 @@ export function SuperAdminDashboard() {
   const totalTenants = allTenants?.length ?? 0;
   const activeTenants = allTenants?.filter((t) => t.subscription_status === "active").length ?? 0;
   const trialTenants = allTenants?.filter((t) => t.subscription_status === "trial").length ?? 0;
-  const mrr = activeTenants * 49;
+  const mrr = activeTenants * monthlyPrice;
 
   // Trials expiring in next 7 days
   const now = new Date();
@@ -159,22 +161,24 @@ export function SuperAdminDashboard() {
           </Card>
         </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            {loadingClients ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{totalClients}</div>
-                <p className="text-xs text-muted-foreground">En toda la plataforma</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <Link to="/super-admin/users" className="block">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
+              <Users className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              {loadingClients ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{totalClients}</div>
+                  <p className="text-xs text-muted-foreground">En toda la plataforma</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link to="/super-admin/revenue" className="block">
           <Card className="hover:bg-muted/50 transition-colors cursor-pointer">

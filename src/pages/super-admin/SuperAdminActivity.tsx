@@ -51,7 +51,7 @@ export function SuperAdminActivity() {
       activity.tenant_name.toLowerCase().includes(searchLower) ||
       activity.action.toLowerCase().includes(searchLower) ||
       activity.entity_type.toLowerCase().includes(searchLower) ||
-      activity.user_email?.toLowerCase().includes(searchLower)
+      (activity.user_email || "sistema").toLowerCase().includes(searchLower)
     );
   });
 

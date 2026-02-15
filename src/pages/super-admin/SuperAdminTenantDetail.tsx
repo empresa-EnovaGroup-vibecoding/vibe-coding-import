@@ -185,7 +185,7 @@ export function SuperAdminTenantDetail() {
     mutationFn: async () => {
       // Delete all related data first, then the tenant
       const tables = [
-        "appointments", "sales", "sale_items", "clients", "services",
+        "tenant_notes", "appointments", "sales", "sale_items", "clients", "services",
         "inventory", "team_members", "cabins", "packages", "package_services",
         "tenant_members", "tenant_invites",
       ];

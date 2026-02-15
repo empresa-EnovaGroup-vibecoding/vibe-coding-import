@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { TrialBanner } from "./TrialBanner";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { ImpersonationBanner } from "@/components/super-admin/ImpersonationBanner";
 
 const ContentLoader = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -68,6 +69,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground">
         Saltar al contenido principal
       </a>
+      <ImpersonationBanner />
       <AppSidebar />
       <main id="main-content" className="lg:pl-64">
         <TrialBanner />

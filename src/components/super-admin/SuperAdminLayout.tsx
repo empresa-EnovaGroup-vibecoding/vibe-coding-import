@@ -127,7 +127,9 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive = item.path === "/super-admin"
+                ? location.pathname === "/super-admin"
+                : location.pathname.startsWith(item.path);
               return (
                 <NavLink
                   key={item.path}

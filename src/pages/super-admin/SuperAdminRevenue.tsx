@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, Clock, Users, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 
 interface ActiveTenant {
   id: string;
@@ -31,6 +32,8 @@ interface TrialTenant {
  * - Tabla de negocios activos con fecha de último pago
  */
 export function SuperAdminRevenue() {
+  const { monthlyPrice } = usePlatformSettings();
+
   // Query: Negocios activos
   const { data: activeTenants, isLoading: loadingActive } = useQuery({
     queryKey: ["super-admin", "revenue-active"],
@@ -82,7 +85,7 @@ export function SuperAdminRevenue() {
 
   // Calcular MRR y ARR
   const activeTenantCount = activeTenants?.length ?? 0;
-  const mrr = activeTenantCount * 49; // $49 USD por tenant activo
+  const mrr = activeTenantCount * monthlyPrice;
   const arr = mrr * 12;
   const totalTrials = allTenants?.filter((t) => t.subscription_status === "trial").length ?? 0;
 
@@ -139,7 +142,7 @@ export function SuperAdminRevenue() {
               <>
                 <div className="text-2xl font-bold">${mrr} USD</div>
                 <p className="text-xs text-muted-foreground">
-                  {activeTenantCount} negocios activos × $49/mes
+                  {activeTenantCount} negocios activos × ${monthlyPrice}/mes
                 </p>
               </>
             )}
@@ -199,7 +202,7 @@ export function SuperAdminRevenue() {
               <>
                 <div className="text-2xl font-bold">{totalTrials}</div>
                 <p className="text-xs text-muted-foreground">
-                  Potencial: ${totalTrials * 49} USD/mes
+                  Potencial: ${totalTrials * monthlyPrice} USD/mes
                 </p>
               </>
             )}
