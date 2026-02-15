@@ -118,12 +118,7 @@ export default function Expenses() {
 
       if (result?.success && result?.data) {
         const d = result.data as Record<string, unknown>;
-        const confidence = typeof d.confidence === "number" ? d.confidence : 0;
-        if (confidence < 0.3) {
-          toast.warning("No pude leer bien el comprobante. Revisa los datos.");
-        } else {
-          toast.success("Datos extraidos del comprobante");
-        }
+        toast.success("Datos extraidos del comprobante");
         setFormData((prev) => ({
           ...prev,
           description: (d.description as string) || prev.description,
