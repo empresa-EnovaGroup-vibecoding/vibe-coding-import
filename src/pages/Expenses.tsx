@@ -103,6 +103,10 @@ export default function Expenses() {
   };
 
   const handleReceiptUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Solo se permiten archivos de imagen");
+      return;
+    }
     if (file.size > 10 * 1024 * 1024) {
       toast.error("La imagen es muy grande (max 10MB)");
       return;

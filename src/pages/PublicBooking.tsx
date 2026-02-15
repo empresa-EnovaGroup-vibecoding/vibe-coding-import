@@ -92,6 +92,10 @@ export default function PublicBooking() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Solo se permiten archivos de imagen");
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       toast.error("La imagen no puede pesar mas de 5MB");
       return;

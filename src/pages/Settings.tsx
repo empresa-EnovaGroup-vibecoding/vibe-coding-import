@@ -59,6 +59,11 @@ export default function Settings() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+      toast.error("Solo se permiten archivos de imagen");
+      return;
+    }
+
     if (file.size > 2 * 1024 * 1024) {
       toast.error("La imagen no puede pesar mas de 2MB");
       return;
