@@ -44,6 +44,9 @@ const SuperAdminDashboard = lazy(() => import("./pages/super-admin/SuperAdminDas
 const SuperAdminTenants = lazy(() => import("./pages/super-admin/SuperAdminTenants").then(m => ({ default: m.SuperAdminTenants })));
 const SuperAdminRevenue = lazy(() => import("./pages/super-admin/SuperAdminRevenue").then(m => ({ default: m.SuperAdminRevenue })));
 const SuperAdminTenantDetail = lazy(() => import("./pages/super-admin/SuperAdminTenantDetail").then(m => ({ default: m.SuperAdminTenantDetail })));
+const SuperAdminUsers = lazy(() => import("./pages/super-admin/SuperAdminUsers").then(m => ({ default: m.SuperAdminUsers })));
+const SuperAdminActivity = lazy(() => import("./pages/super-admin/SuperAdminActivity").then(m => ({ default: m.SuperAdminActivity })));
+const SuperAdminSettings = lazy(() => import("./pages/super-admin/SuperAdminSettings").then(m => ({ default: m.SuperAdminSettings })));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -142,6 +145,42 @@ const App = () => (
                     <RequireSuperAdmin>
                       <SuperAdminLayout>
                         <SuperAdminRevenue />
+                      </SuperAdminLayout>
+                    </RequireSuperAdmin>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/super-admin/users"
+                element={
+                  <RequireAuth>
+                    <RequireSuperAdmin>
+                      <SuperAdminLayout>
+                        <SuperAdminUsers />
+                      </SuperAdminLayout>
+                    </RequireSuperAdmin>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/super-admin/activity"
+                element={
+                  <RequireAuth>
+                    <RequireSuperAdmin>
+                      <SuperAdminLayout>
+                        <SuperAdminActivity />
+                      </SuperAdminLayout>
+                    </RequireSuperAdmin>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/super-admin/settings"
+                element={
+                  <RequireAuth>
+                    <RequireSuperAdmin>
+                      <SuperAdminLayout>
+                        <SuperAdminSettings />
                       </SuperAdminLayout>
                     </RequireSuperAdmin>
                   </RequireAuth>

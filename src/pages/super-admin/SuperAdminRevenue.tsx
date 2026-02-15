@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, Clock, Loader2 } from "lucide-react";
+import { DollarSign, TrendingUp, Clock, Users, Loader2 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface ActiveTenant {
   id: string;
@@ -66,10 +67,43 @@ export function SuperAdminRevenue() {
     },
   });
 
+  // Query: All tenants for growth chart
+  const { data: allTenants } = useQuery({
+    queryKey: ["super-admin", "revenue-all-tenants"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("id, created_at, subscription_status")
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   // Calcular MRR y ARR
   const activeTenantCount = activeTenants?.length ?? 0;
   const mrr = activeTenantCount * 49; // $49 USD por tenant activo
   const arr = mrr * 12;
+  const totalTrials = allTenants?.filter((t) => t.subscription_status === "trial").length ?? 0;
+
+  // Build monthly growth data (last 6 months)
+  const getMonthlyGrowth = () => {
+    if (!allTenants) return [];
+    const months: { month: string; registros: number }[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("es-ES", { month: "short", year: "2-digit" });
+      const count = allTenants.filter((t) => {
+        const created = new Date(t.created_at);
+        return created.getFullYear() === d.getFullYear() && created.getMonth() === d.getMonth();
+      }).length;
+      months.push({ month: label, registros: count });
+    }
+    return months;
+  };
+  const monthlyData = getMonthlyGrowth();
 
   // Helper: Calcular días restantes de trial
   const getDaysUntilEnd = (endDate: string) => {
@@ -91,7 +125,7 @@ export function SuperAdminRevenue() {
       </div>
 
       {/* Revenue Metrics */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* MRR */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -151,7 +185,52 @@ export function SuperAdminRevenue() {
             )}
           </CardContent>
         </Card>
+
+        {/* Total Trials */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">En Trial</CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            {loadingActive ? (
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{totalTrials}</div>
+                <p className="text-xs text-muted-foreground">
+                  Potencial: ${totalTrials * 49} USD/mes
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Monthly Growth Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Crecimiento Mensual</CardTitle>
+          <CardDescription>Negocios registrados por mes (ultimos 6 meses)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {monthlyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="month" className="text-xs" />
+                <YAxis allowDecimals={false} className="text-xs" />
+                <Tooltip />
+                <Bar dataKey="registros" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              Sin datos de registros
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Upcoming Conversions Table */}
       {upcomingConversions && upcomingConversions.length > 0 && (

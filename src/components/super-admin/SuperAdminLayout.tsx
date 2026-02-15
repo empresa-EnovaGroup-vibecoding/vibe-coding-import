@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Building2, DollarSign, LogOut, Menu, X, Shield, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Building2, DollarSign, Users, Activity, Settings, LogOut, Menu, X, Shield, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -25,6 +25,21 @@ const navItems = [
     title: "Ingresos",
     path: "/super-admin/revenue",
     icon: DollarSign,
+  },
+  {
+    title: "Usuarios",
+    path: "/super-admin/users",
+    icon: Users,
+  },
+  {
+    title: "Actividad",
+    path: "/super-admin/activity",
+    icon: Activity,
+  },
+  {
+    title: "Configuracion",
+    path: "/super-admin/settings",
+    icon: Settings,
   },
 ];
 
