@@ -75,7 +75,6 @@ export default function UserManagement() {
 
       setMembers(formattedMembers);
     } catch (error: unknown) {
-      console.error("Error fetching members:", error);
       toast.error("Error al cargar miembros");
     } finally {
       setLoading(false);
@@ -94,7 +93,6 @@ export default function UserManagement() {
       if (error) throw error;
       setInvites(data || []);
     } catch (error: unknown) {
-      console.error("Error fetching invites:", error);
       toast.error("Error al cargar invitaciones");
     }
   };
@@ -129,7 +127,6 @@ export default function UserManagement() {
       toast.success(`Rol actualizado a ${roleLabel}`);
       fetchMembers();
     } catch (error: unknown) {
-      console.error("Error assigning role:", error);
       const errorMessage = error instanceof Error ? error.message : "Error al asignar rol";
       toast.error(errorMessage);
     } finally {
@@ -153,7 +150,6 @@ export default function UserManagement() {
       toast.success("Miembro eliminado");
       fetchMembers();
     } catch (error: unknown) {
-      console.error("Error removing member:", error);
       const errorMessage = error instanceof Error ? error.message : "Error al eliminar miembro";
       toast.error(errorMessage);
     } finally {

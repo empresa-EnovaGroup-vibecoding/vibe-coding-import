@@ -114,7 +114,6 @@ export default function PublicBooking() {
       .upload(filePath, receiptFile);
 
     if (error) {
-      console.error("Receipt upload error:", error);
       return null;
     }
 
@@ -134,7 +133,10 @@ export default function PublicBooking() {
       toast.error("Tu telefono es requerido");
       return;
     }
-    if (!selectedService || !selectedDate || !selectedTime) return;
+    if (!selectedService || !selectedDate || !selectedTime) {
+      toast.error("Selecciona servicio, fecha y hora");
+      return;
+    }
 
     setIsSubmitting(true);
     try {

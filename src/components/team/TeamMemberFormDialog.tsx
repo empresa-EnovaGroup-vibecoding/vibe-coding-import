@@ -96,7 +96,6 @@ export function TeamMemberFormDialog({ open, onOpenChange, member }: TeamMemberF
       form.reset();
     },
     onError: (error) => {
-      console.error("Error saving team member:", error);
       toast.error("Error al guardar el miembro del equipo");
     },
   });

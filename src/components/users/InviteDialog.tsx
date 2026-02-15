@@ -59,7 +59,6 @@ export function InviteDialog({ onInviteCreated }: InviteDialogProps) {
       onInviteCreated();
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Error al crear invitacion";
-      console.error("Error creating invite:", error);
       toast.error(msg);
     } finally {
       setCreating(false);

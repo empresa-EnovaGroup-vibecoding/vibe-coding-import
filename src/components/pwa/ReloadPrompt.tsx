@@ -1,8 +1,11 @@
+import { useEffect, useRef } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, X } from "lucide-react";
 
 export function ReloadPrompt() {
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
@@ -10,12 +13,18 @@ export function ReloadPrompt() {
     onRegisteredSW(_swUrl, registration) {
       if (registration) {
         // Check for updates every hour
-        setInterval(() => {
+        intervalRef.current = setInterval(() => {
           registration.update();
         }, 60 * 60 * 1000);
       }
     },
   });
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   if (!needRefresh) return null;
 

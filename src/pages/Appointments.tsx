@@ -318,7 +318,7 @@ export default function Appointments() {
       time: format(startDate, "HH:mm"),
       status: appointment.status,
       notes: appointment.notes || "",
-      selectedServices: appointment.appointment_services.map(s => s.service_id),
+      selectedServices: appointment.appointment_services?.map(s => s.service_id) ?? [],
       specialist_id: appointment.specialist_id || "",
       cabin_id: appointment.cabin_id || "",
     });
@@ -333,6 +333,10 @@ export default function Appointments() {
     }
     if (!formData.date || !formData.time) {
       toast.error("Selecciona fecha y hora");
+      return;
+    }
+    if (formData.selectedServices.length === 0) {
+      toast.error("Selecciona al menos un servicio");
       return;
     }
     if (editingId) {

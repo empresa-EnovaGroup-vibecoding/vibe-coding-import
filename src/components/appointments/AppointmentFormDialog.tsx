@@ -107,11 +107,17 @@ export function AppointmentFormDialog({
                 <SelectValue placeholder="Seleccionar cliente" />
               </SelectTrigger>
               <SelectContent>
-                {clients?.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.name}
-                  </SelectItem>
-                ))}
+                {!clients ? (
+                  <p className="text-sm text-muted-foreground text-center py-2">Cargando...</p>
+                ) : clients.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-2">Sin clientes</p>
+                ) : (
+                  clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -148,11 +154,17 @@ export function AppointmentFormDialog({
                   <SelectValue placeholder="Seleccionar" />
                 </SelectTrigger>
                 <SelectContent>
-                  {teamMembers?.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.name}
-                    </SelectItem>
-                  ))}
+                  {!teamMembers ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">Cargando...</p>
+                  ) : teamMembers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">Sin especialistas</p>
+                  ) : (
+                    teamMembers.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -166,11 +178,17 @@ export function AppointmentFormDialog({
                   <SelectValue placeholder="Seleccionar" />
                 </SelectTrigger>
                 <SelectContent>
-                  {cabins?.map((cabin) => (
-                    <SelectItem key={cabin.id} value={cabin.id}>
-                      {cabin.name}
-                    </SelectItem>
-                  ))}
+                  {!cabins ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">Cargando...</p>
+                  ) : cabins.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">Sin cabinas</p>
+                  ) : (
+                    cabins.map((cabin) => (
+                      <SelectItem key={cabin.id} value={cabin.id}>
+                        {cabin.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

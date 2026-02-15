@@ -11,6 +11,7 @@ import { MessageCircle, Check, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useTenant } from "@/hooks/useTenant";
 
 interface Appointment {
@@ -93,7 +94,7 @@ export function BulkReminderButton({ appointments }: BulkReminderButtonProps) {
       window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
       setSentIds((prev) => new Set(prev).add(appointment.id));
     } catch {
-      // Silent fail - WhatsApp won't open but app stays stable
+      toast.error("Error al enviar recordatorio");
     }
   };
 

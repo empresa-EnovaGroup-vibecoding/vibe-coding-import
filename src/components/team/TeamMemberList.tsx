@@ -62,7 +62,6 @@ export function TeamMemberList() {
       setMemberToDelete(null);
     },
     onError: (error) => {
-      console.error("Error deleting team member:", error);
       toast.error("Error al eliminar el miembro");
     },
   });

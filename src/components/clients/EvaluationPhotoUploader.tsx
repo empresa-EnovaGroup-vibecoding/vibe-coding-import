@@ -39,7 +39,6 @@ export default function EvaluationPhotoUploader({
 
         if (error) {
           toast.error(`Error al subir ${file.name}`);
-          console.error("Upload error:", error);
           continue;
         }
 
@@ -55,7 +54,6 @@ export default function EvaluationPhotoUploader({
         toast.success(`${newUrls.length} foto(s) subida(s)`);
       }
     } catch (err) {
-      console.error("Upload error:", err);
       toast.error("Error al subir fotos");
     } finally {
       setUploading(false);

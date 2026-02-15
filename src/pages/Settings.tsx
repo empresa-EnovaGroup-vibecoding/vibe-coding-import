@@ -94,7 +94,6 @@ export default function Settings() {
         .upload(filePath, logoFile, { upsert: true });
 
       if (error) {
-        console.error("Logo upload error:", error);
         toast.error("Error al subir el logo");
         return tenant?.logo_url ?? null;
       }
@@ -130,7 +129,6 @@ export default function Settings() {
       await refetch();
       toast.success("Logo eliminado");
     } catch (err) {
-      console.error("Error removing logo:", err);
       toast.error("Error al eliminar el logo");
     }
   };
@@ -186,7 +184,6 @@ export default function Settings() {
       await refetch();
       toast.success("Configuracion actualizada");
     } catch (err) {
-      console.error("Error updating tenant:", err);
       toast.error("Error al guardar los cambios");
     } finally {
       setIsSaving(false);

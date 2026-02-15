@@ -111,7 +111,6 @@ export function SuperAdminSettings() {
       });
     },
     onError: (error) => {
-      console.error("Error al guardar configuraciones:", error);
       toast.error("Error al guardar las configuraciones");
     },
   });

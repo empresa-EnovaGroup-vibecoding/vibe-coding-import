@@ -88,7 +88,6 @@ export function BusinessHoursCard() {
       await refetch();
       toast.success("Horario actualizado");
     } catch (err) {
-      console.error("Error saving hours:", err);
       toast.error("Error al guardar el horario");
     } finally {
       setIsSaving(false);

@@ -127,7 +127,6 @@ export default function Onboarding() {
       await refetch();
       navigate("/");
     } catch (err) {
-      console.error("Error creating tenant:", err);
       toast.error("Error al crear el negocio");
     } finally {
       setIsCreating(false);

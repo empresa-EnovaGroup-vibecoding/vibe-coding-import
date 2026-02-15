@@ -62,7 +62,6 @@ export function CabinList() {
       setCabinToDelete(null);
     },
     onError: (error) => {
-      console.error("Error deleting cabin:", error);
       toast.error("Error al eliminar la cabina");
     },
   });
