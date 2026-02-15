@@ -178,6 +178,38 @@ export function SuperAdminTenantDetail() {
     },
   });
 
+  // Mutation: delete tenant
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      // Delete all related data first, then the tenant
+      const tables = [
+        "appointments", "sales", "sale_items", "clients", "services",
+        "inventory", "team_members", "cabins", "packages", "package_services",
+        "tenant_members", "tenant_invites",
+      ];
+      for (const table of tables) {
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .eq("tenant_id", tenantId!);
+        if (error) console.warn(`Error deleting from ${table}:`, error.message);
+      }
+      // Finally delete the tenant
+      const { error } = await supabase
+        .from("tenants")
+        .delete()
+        .eq("id", tenantId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Negocio eliminado permanentemente");
+      navigate("/super-admin/tenants");
+    },
+    onError: (error) => {
+      toast.error("Error: " + (error as Error).message);
+    },
+  });
+
   // Mutation: extend trial
   const extendTrialMutation = useMutation({
     mutationFn: async ({ days }: { days: number }) => {
@@ -262,12 +294,15 @@ export function SuperAdminTenantDetail() {
         </div>
         <TenantActionButtons
           tenant={tenant}
+          ownerEmail={ownerEmail}
           onActivatePlan={(planType) => activatePlanMutation.mutate({ planType })}
           isActivating={activatePlanMutation.isPending}
           onExtendTrial={(days) => extendTrialMutation.mutate({ days })}
           isExtending={extendTrialMutation.isPending}
           onSuspend={() => suspendMutation.mutate()}
           isSuspending={suspendMutation.isPending}
+          onDelete={() => deleteMutation.mutate()}
+          isDeleting={deleteMutation.isPending}
           onImpersonate={handleImpersonate}
         />
       </div>
