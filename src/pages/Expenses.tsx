@@ -422,6 +422,7 @@ export default function Expenses() {
               <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>Registrar primer gasto</Button>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
@@ -471,6 +472,7 @@ export default function Expenses() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </div>
       </div>

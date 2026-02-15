@@ -234,6 +234,7 @@ export default function Clients() {
           </div>
         ) : (
           <>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
@@ -289,6 +290,7 @@ export default function Clients() {
                 ))}
               </TableBody>
             </Table>
+            </div>
             <TablePagination
               page={page}
               totalCount={totalCount}
