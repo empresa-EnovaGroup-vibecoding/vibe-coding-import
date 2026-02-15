@@ -29,14 +29,9 @@ export default function Landing() {
 
         <div className="mx-auto max-w-6xl text-center">
           {/* Logo/Brand */}
-          <div className="mb-6 inline-flex items-center gap-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-2xl font-bold text-white shadow-lg">
-              A
-            </div>
-            <h1 className="text-5xl font-bold tracking-tight text-gray-900 md:text-7xl">
-              Aura
-            </h1>
-          </div>
+          <h1 className="mb-6 text-5xl font-bold tracking-tight text-gray-900 md:text-7xl">
+            Aura
+          </h1>
 
           {/* Subtitle */}
           <p className="mb-4 text-2xl font-semibold text-gray-800 md:text-3xl">
