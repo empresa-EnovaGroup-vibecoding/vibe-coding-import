@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
 
 interface Client {
   id: string;
@@ -31,6 +32,7 @@ export function EditClientDialog({ client, open, onOpenChange }: EditClientDialo
   const [phone, setPhone] = useState(client.phone || "");
   const [email, setEmail] = useState(client.email || "");
   const queryClient = useQueryClient();
+  const { tenantId } = useTenant();
 
   // Reset form when client changes or dialog opens
   useEffect(() => {
@@ -50,7 +52,8 @@ export function EditClientDialog({ client, open, onOpenChange }: EditClientDialo
           phone: data.phone || null,
           email: data.email || null,
         })
-        .eq("id", client.id);
+        .eq("id", client.id)
+        .eq("tenant_id", tenantId);
 
       if (error) throw error;
     },

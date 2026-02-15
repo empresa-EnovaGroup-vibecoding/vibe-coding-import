@@ -31,27 +31,32 @@ export function TeamMemberList() {
   const { isOwner, tenantId } = useTenant();
 
   const { data: members, isLoading } = useQuery({
-    queryKey: ["teamMembers"],
+    queryKey: ["teamMembers", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("team_members")
         .select("*")
+        .eq("tenant_id", tenantId)
         .order("name");
       if (error) throw error;
       return data;
     },
+    enabled: !!tenantId,
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase
         .from("team_members")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teamMembers"] });
+      queryClient.invalidateQueries({ queryKey: ["teamMembers", tenantId] });
       toast.success("Miembro eliminado");
       setDeleteDialogOpen(false);
       setMemberToDelete(null);
@@ -242,9 +247,10 @@ export function TeamMemberList() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Eliminar
+              {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

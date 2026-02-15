@@ -31,27 +31,32 @@ export function CabinList() {
   const { isOwner, tenantId } = useTenant();
 
   const { data: cabins, isLoading } = useQuery({
-    queryKey: ["cabins"],
+    queryKey: ["cabins", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("cabins")
         .select("*")
+        .eq("tenant_id", tenantId)
         .order("name");
       if (error) throw error;
       return data;
     },
+    enabled: !!tenantId,
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!tenantId) throw new Error("No tenant ID");
       const { error } = await supabase
         .from("cabins")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cabins"] });
+      queryClient.invalidateQueries({ queryKey: ["cabins", tenantId] });
       toast.success("Cabina eliminada");
       setDeleteDialogOpen(false);
       setCabinToDelete(null);
@@ -229,9 +234,10 @@ export function CabinList() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Eliminar
+              {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

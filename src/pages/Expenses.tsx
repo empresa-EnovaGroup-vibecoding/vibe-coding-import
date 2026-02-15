@@ -267,7 +267,8 @@ export default function Expenses() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("expenses").delete().eq("id", id);
+      if (!tenantId) throw new Error("No tenant ID");
+      const { error } = await supabase.from("expenses").delete().eq("id", id).eq("tenant_id", tenantId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -281,7 +282,8 @@ export default function Expenses() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.description.trim()) { toast.error("La descripcion es requerida"); return; }
-    if (!formData.amount || parseFloat(formData.amount) <= 0) { toast.error("El monto debe ser mayor a 0"); return; }
+    const parsedAmount = parseFloat(formData.amount);
+    if (!formData.amount || isNaN(parsedAmount) || parsedAmount <= 0) { toast.error("El monto debe ser un numero mayor a 0"); return; }
     createMutation.mutate(formData);
   };
 

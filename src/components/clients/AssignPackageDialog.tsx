@@ -52,16 +52,19 @@ export function AssignPackageDialog({
   const { tenantId } = useTenant();
 
   const { data: packages } = useQuery({
-    queryKey: ["packages", "active"],
+    queryKey: ["packages", "active", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
       const { data, error } = await supabase
         .from("packages")
         .select("id, name, total_sessions, price, validity_days, services(name)")
         .eq("is_active", true)
+        .eq("tenant_id", tenantId)
         .order("name");
       if (error) throw error;
       return data;
     },
+    enabled: !!tenantId,
   });
 
   const form = useForm<AssignFormData>({
