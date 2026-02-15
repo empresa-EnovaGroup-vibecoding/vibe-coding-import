@@ -8,20 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Clock,
-  DollarSign,
   Calendar,
-  User,
-  Phone,
-  Mail,
-  Upload,
-  CheckCircle2,
   ArrowLeft,
   Loader2,
-  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, addDays } from "date-fns";
-import { es } from "date-fns/locale";
+import { addDays } from "date-fns";
+import { BookingStepClientInfo } from "@/components/public-booking/BookingStepClientInfo";
+import { BookingSuccess } from "@/components/public-booking/BookingSuccess";
+import { generateTimeSlots, DAY_NAMES } from "@/components/public-booking/booking-utils";
 
 interface ServiceInfo {
   id: string;
@@ -43,52 +38,6 @@ interface BookingInfo {
 interface BookedSlot {
   start_time: string;
   end_time: string;
-}
-
-const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-
-function generateTimeSlots(
-  open: string,
-  close: string,
-  durationMin: number,
-  booked: BookedSlot[],
-  selectedDate: string
-): string[] {
-  const [openH, openM] = open.split(":").map(Number);
-  const [closeH, closeM] = close.split(":").map(Number);
-  const openTotal = openH * 60 + openM;
-  const closeTotal = closeH * 60 + closeM;
-  const slots: string[] = [];
-
-  for (let t = openTotal; t + durationMin <= closeTotal; t += 30) {
-    const hh = String(Math.floor(t / 60)).padStart(2, "0");
-    const mm = String(t % 60).padStart(2, "0");
-    const slotStart = new Date(`${selectedDate}T${hh}:${mm}:00`);
-    const slotEnd = new Date(slotStart.getTime() + durationMin * 60000);
-
-    const hasConflict = booked.some((b) => {
-      const bStart = new Date(b.start_time);
-      const bEnd = new Date(b.end_time);
-      return slotStart < bEnd && slotEnd > bStart;
-    });
-
-    if (!hasConflict) {
-      slots.push(`${hh}:${mm}`);
-    }
-  }
-
-  // Filter out past times if date is today
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
-  if (selectedDate === today) {
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    return slots.filter((s) => {
-      const [h, m] = s.split(":").map(Number);
-      return h * 60 + m > currentMinutes + 30; // at least 30 min from now
-    });
-  }
-
-  return slots;
 }
 
 export default function PublicBooking() {
@@ -411,189 +360,32 @@ export default function PublicBooking() {
 
         {/* Step 3: Client Info + Receipt */}
         {step === 3 && selectedService && (
-          <div className="space-y-4">
-            <button
-              onClick={() => setStep(2)}
-              className="flex items-center gap-1 text-sm text-blue-600 hover:underline"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Cambiar fecha/hora
-            </button>
-
-            <div className="bg-blue-50 rounded-lg p-3 text-sm space-y-1">
-              <p className="font-medium">{selectedService.name}</p>
-              <p className="text-gray-600">
-                {selectedDate && format(new Date(selectedDate + "T12:00:00"), "EEEE d 'de' MMMM", { locale: es })} a las {selectedTime}
-              </p>
-              <p className="text-blue-600 font-bold">Q{Number(selectedService.price).toFixed(2)}</p>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="font-semibold text-gray-800">Tus datos</h3>
-
-              <div className="space-y-2">
-                <Label htmlFor="client-name" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Nombre completo *
-                </Label>
-                <Input
-                  id="client-name"
-                  placeholder="Ej: Maria Lopez"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="client-phone" className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Telefono / WhatsApp *
-                </Label>
-                <Input
-                  id="client-phone"
-                  type="tel"
-                  placeholder="Ej: 5555 1234"
-                  value={clientPhone}
-                  onChange={(e) => setClientPhone(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="client-email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email (opcional)
-                </Label>
-                <Input
-                  id="client-email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={clientEmail}
-                  onChange={(e) => setClientEmail(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Receipt upload */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                Comprobante de pago (opcional)
-              </Label>
-              <p className="text-xs text-gray-500">
-                Si ya realizaste el pago, sube una foto del comprobante.
-              </p>
-
-              {receiptPreview ? (
-                <div className="relative">
-                  <img
-                    src={receiptPreview}
-                    alt="Comprobante"
-                    className="w-full max-h-48 object-contain rounded-lg border"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => {
-                      setReceiptFile(null);
-                      setReceiptPreview(null);
-                    }}
-                  >
-                    Quitar
-                  </Button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors"
-                >
-                  <ImageIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">Toca para subir foto</p>
-                  <p className="text-xs text-gray-400 mt-1">JPG, PNG o WebP. Max 5MB</p>
-                </button>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
-
-            <Button
-              className="w-full gap-2 h-12 text-base"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Reservando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-5 w-5" />
-                  Confirmar Reserva
-                </>
-              )}
-            </Button>
-          </div>
+          <BookingStepClientInfo
+            selectedService={selectedService}
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            clientName={clientName}
+            clientPhone={clientPhone}
+            clientEmail={clientEmail}
+            receiptPreview={receiptPreview}
+            isSubmitting={isSubmitting}
+            onClientNameChange={setClientName}
+            onClientPhoneChange={setClientPhone}
+            onClientEmailChange={setClientEmail}
+            onFileSelect={handleFileSelect}
+            onClearReceipt={() => {
+              setReceiptFile(null);
+              setReceiptPreview(null);
+            }}
+            onSubmit={handleSubmit}
+            onBack={() => setStep(2)}
+            fileInputRef={fileInputRef}
+          />
         )}
 
         {/* Step 4: Success */}
         {step === 4 && bookingResult && (
-          <div className="text-center space-y-6 py-8">
-            <div className="h-20 w-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-              <CheckCircle2 className="h-10 w-10 text-primary" />
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Reserva Confirmada</h2>
-              <p className="text-gray-500 mt-1">Te contactaremos para confirmar tu cita</p>
-            </div>
-
-            <Card>
-              <CardContent className="p-4 space-y-3 text-left">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Servicio</span>
-                  <span className="font-medium">{bookingResult.service_name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Fecha</span>
-                  <span className="font-medium">
-                    {format(new Date(bookingResult.start_time), "d 'de' MMMM, yyyy", { locale: es })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Hora</span>
-                  <span className="font-medium">
-                    {format(new Date(bookingResult.start_time), "HH:mm")} - {format(new Date(bookingResult.end_time), "HH:mm")}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-gray-500">Total</span>
-                  <span className="font-bold text-blue-600">Q{Number(bookingResult.price).toFixed(2)}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {info?.phone && (
-              <a
-                href={`https://wa.me/${info.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                  `Hola! Acabo de reservar ${bookingResult.service_name} para el ${format(new Date(bookingResult.start_time), "d/MM 'a las' HH:mm")}`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors"
-              >
-                <Phone className="h-5 w-5" />
-                Contactar por WhatsApp
-              </a>
-            )}
-          </div>
+          <BookingSuccess bookingResult={bookingResult} phone={info?.phone ?? null} />
         )}
       </div>
     </div>

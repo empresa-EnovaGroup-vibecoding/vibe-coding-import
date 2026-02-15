@@ -4,22 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Plus, Trash2, TrendingDown, TrendingUp, DollarSign, Calendar, ChevronLeft, ChevronRight,
-  Camera, Upload, Loader2, ImageIcon, X,
+  Trash2, TrendingDown, Calendar, ChevronLeft, ChevronRight, ImageIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -28,24 +21,9 @@ import {
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-
-const CATEGORIES: Record<string, { label: string; color: string }> = {
-  rent: { label: "Alquiler", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
-  utilities: { label: "Servicios", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" },
-  supplies: { label: "Insumos", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-  payroll: { label: "Nomina", color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200" },
-  marketing: { label: "Marketing", color: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200" },
-  other: { label: "Otro", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200" },
-};
-
-const PIE_COLORS: Record<string, string> = {
-  rent: "hsl(221, 83%, 53%)",
-  utilities: "hsl(38, 92%, 50%)",
-  supplies: "hsl(142, 71%, 45%)",
-  payroll: "hsl(262, 83%, 58%)",
-  marketing: "hsl(330, 81%, 60%)",
-  other: "hsl(215, 16%, 47%)",
-};
+import { ExpenseFormDialog } from "@/components/expenses/ExpenseFormDialog";
+import { ExpenseSummaryCards } from "@/components/expenses/ExpenseSummaryCards";
+import { CATEGORIES, PIE_COLORS } from "@/components/expenses/expense-constants";
 
 interface Expense {
   id: string;
@@ -324,13 +302,6 @@ export default function Expenses() {
   // Computed values
   const revenue = financial?.curRev ?? 0;
   const totalExpenses = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0;
-  const profit = revenue - totalExpenses;
-  const prevRev = financial?.prevRev ?? 0;
-  const prevExp = financial?.prevExp ?? 0;
-  const prevProfit = prevRev - prevExp;
-
-  const pct = (cur: number, prev: number) => prev === 0 ? (cur > 0 ? 100 : 0) : ((cur - prev) / prev) * 100;
-  const compLabel = period === "week" ? "vs semana anterior" : "vs mes anterior";
 
   // Category breakdown for pie chart
   const categoryData = useMemo(() => {
@@ -346,18 +317,6 @@ export default function Expenses() {
     const d = subMonths(new Date(), i);
     return { value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: format(d, "MMMM yyyy", { locale: es }) };
   });
-
-  function ComparisonText({ current, previous, invertColor }: { current: number; previous: number; invertColor?: boolean }) {
-    if (previous === 0 && current === 0) return null;
-    const change = pct(current, previous);
-    const isPositive = invertColor ? change <= 0 : change >= 0;
-    return (
-      <p className={`text-xs flex items-center gap-1 mt-1 ${isPositive ? "text-green-600" : "text-red-500"}`}>
-        {change >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-        {change >= 0 ? "+" : ""}{change.toFixed(1)}% {compLabel}
-      </p>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -399,162 +358,31 @@ export default function Expenses() {
             </div>
           )}
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2"><Plus className="h-4 w-4" /><span className="hidden sm:inline">Nuevo Gasto</span></Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader><DialogTitle>Registrar Gasto</DialogTitle></DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Receipt Upload */}
-                <div className="space-y-2">
-                  <Label>Comprobante (opcional)</Label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/heic"
-                    capture="environment"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleReceiptUpload(file);
-                    }}
-                  />
-                  {receiptPreview ? (
-                    <div className="relative rounded-xl border border-border overflow-hidden">
-                      <img src={receiptPreview} alt="Comprobante" className="w-full h-40 object-cover" />
-                      {isExtracting && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <div className="flex items-center gap-2 text-white text-sm">
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            Leyendo comprobante...
-                          </div>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={clearReceipt}
-                        className="absolute top-2 right-2 rounded-full bg-black/60 p-1 text-white hover:bg-black/80 transition-colors"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1 gap-2"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <Camera className="h-4 w-4" />
-                        Tomar Foto
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1 gap-2"
-                        onClick={() => {
-                          if (fileInputRef.current) {
-                            fileInputRef.current.removeAttribute("capture");
-                            fileInputRef.current.click();
-                            fileInputRef.current.setAttribute("capture", "environment");
-                          }
-                        }}
-                      >
-                        <Upload className="h-4 w-4" />
-                        Subir Imagen
-                      </Button>
-                    </div>
-                  )}
-                  <p className="text-[11px] text-muted-foreground">La IA leera el comprobante y llenara los datos automaticamente</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descripcion *</Label>
-                  <Input id="description" value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Ej: Pago de renta local" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Monto (Q) *</Label>
-                    <Input id="amount" type="number" min="0" step="0.01" value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Categoria</Label>
-                    <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(CATEGORIES).map(([key, { label }]) => (
-                          <SelectItem key={key} value={key}>{label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expense_date">Fecha</Label>
-                  <Input id="expense_date" type="date" value={formData.expense_date}
-                    onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notas</Label>
-                  <Textarea id="notes" value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Detalles adicionales..." rows={2} />
-                </div>
-                <div className="flex justify-end gap-3">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Guardando..." : "Guardar"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <ExpenseFormDialog
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleSubmit}
+            isPending={createMutation.isPending}
+            receiptPreview={receiptPreview}
+            isExtracting={isExtracting}
+            onReceiptUpload={handleReceiptUpload}
+            onClearReceipt={clearReceipt}
+            fileInputRef={fileInputRef}
+          />
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ingresos</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Q{revenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Ventas + Servicios</p>
-            <ComparisonText current={revenue} previous={prevRev} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gastos</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">Q{totalExpenses.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">{expenses?.length || 0} registros</p>
-            <ComparisonText current={totalExpenses} previous={prevExp} invertColor />
-          </CardContent>
-        </Card>
-        <Card className={profit >= 0 ? "border-green-200 dark:border-green-900" : "border-red-200 dark:border-red-900"}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ganancia Neta</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
-              Q{profit.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">Ingresos - Gastos</p>
-            <ComparisonText current={profit} previous={prevProfit} />
-          </CardContent>
-        </Card>
-      </div>
+      <ExpenseSummaryCards
+        revenue={revenue}
+        totalExpenses={totalExpenses}
+        prevRev={financial?.prevRev ?? 0}
+        prevExp={financial?.prevExp ?? 0}
+        period={period}
+        expenseCount={expenses?.length ?? 0}
+      />
 
       {/* Category Chart + Expense Table */}
       <div className="grid gap-6 lg:grid-cols-3">

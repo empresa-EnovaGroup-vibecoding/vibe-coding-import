@@ -4,22 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,10 +15,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Plus, Scissors, Pencil, Trash2, FileUp, Search, Clock } from "lucide-react";
+import { Plus, Scissors, Trash2, FileUp, Search } from "lucide-react";
 import ServicesImportModal from "@/components/services/ServicesImportModal";
+import { ServiceFormDialog } from "@/components/services/ServiceFormDialog";
+import { ServiceRow } from "@/components/services/ServiceRow";
 import { toast } from "sonner";
 
 interface Service {
@@ -279,93 +264,23 @@ export default function Services() {
             <FileUp className="h-4 w-4" />
             Importar Servicios
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-            <DialogTrigger asChild>
+          <ServiceFormDialog
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleSubmit}
+            isPending={createMutation.isPending || updateMutation.isPending}
+            editingService={editingService}
+            categories={categories}
+            onClose={closeDialog}
+            triggerButton={
               <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Nuevo Servicio
               </Button>
-            </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingService ? "Editar Servicio" : "Crear Nuevo Servicio"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nombre del Servicio *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ej: Corte de cabello"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descripcion / Detalle</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Ej: Limpieza profunda con productos premium"
-                  rows={2}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
-                <Select
-                  value={formData.category || "_none_"}
-                  onValueChange={(value) => setFormData({ ...formData, category: value === "_none_" ? "" : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none_">Sin categoria</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Duracion (min)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    placeholder="30"
-                    min="5"
-                    step="5"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price">Precio (Q)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={closeDialog}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {(createMutation.isPending || updateMutation.isPending) ? "Guardando..." : "Guardar"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+            }
+          />
         </div>
 
         <ServicesImportModal
@@ -526,64 +441,19 @@ export default function Services() {
               {/* Service rows */}
               <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border/50">
                 {categoryServices.map((service) => (
-                  <div
+                  <ServiceRow
                     key={service.id}
-                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-                      selectedIds.has(service.id) ? "bg-primary/5" : "hover:bg-muted/30"
-                    }`}
-                  >
-                    <Checkbox
-                      checked={selectedIds.has(service.id)}
-                      onCheckedChange={() => toggleSelect(service.id)}
-                    />
-                    {/* Name ............ Price */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-medium text-foreground truncate">
-                          {service.name}
-                        </span>
-                        <span className="flex-1 border-b border-dotted border-muted-foreground/20 min-w-4" />
-                        <span className="text-sm font-semibold text-foreground whitespace-nowrap">
-                          Q{Number(service.price).toFixed(2)}
-                        </span>
-                      </div>
-                      {service.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {service.description}
-                        </p>
-                      )}
-                    </div>
-                    {/* Duration badge */}
-                    <Badge variant="outline" className="text-[10px] font-normal gap-1 shrink-0 hidden sm:inline-flex">
-                      <Clock className="h-3 w-3" />
-                      {service.duration} min
-                    </Badge>
-                    {/* Actions */}
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                        onClick={() => openEditDialog(service)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      {isOwner && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => {
-                            if (confirm("¿Eliminar este servicio?")) {
-                              deleteMutation.mutate(service.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                    service={service}
+                    isSelected={selectedIds.has(service.id)}
+                    isOwner={isOwner}
+                    onToggleSelect={toggleSelect}
+                    onEdit={openEditDialog}
+                    onDelete={(id) => {
+                      if (confirm("¿Eliminar este servicio?")) {
+                        deleteMutation.mutate(id);
+                      }
+                    }}
+                  />
                 ))}
               </div>
             </div>

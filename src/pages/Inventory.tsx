@@ -5,14 +5,7 @@ import { TablePagination, PAGE_SIZE } from "@/components/shared/TablePagination"
 import { logAudit } from "@/lib/audit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { DialogTrigger } from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -35,6 +28,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Package, Search, Pencil, Trash2, FileUp } from "lucide-react";
 import InventoryImportModal from "@/components/inventory/InventoryImportModal";
+import { InventoryFormDialog } from "@/components/inventory/InventoryFormDialog";
 import { toast } from "sonner";
 import { cn, toTitleCase } from "@/lib/utils";
 import { useTenant } from "@/hooks/useTenant";
@@ -284,97 +278,25 @@ export default function Inventory() {
             <FileUp className="h-4 w-4" />
             Importar Inventario
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-            <DialogTrigger asChild>
-              <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
-                <Plus className="h-4 w-4" />
-                Nuevo Producto
-              </Button>
-            </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>
-                {editingItem ? "Editar Producto" : "Crear Nuevo Producto"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="name">Nombre del Producto *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ej: Champú profesional"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sku">SKU</Label>
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    placeholder="ABC-123"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="stock_level">Stock</Label>
-                  <Input
-                    id="stock_level"
-                    type="number"
-                    value={formData.stock_level}
-                    onChange={(e) => setFormData({ ...formData, stock_level: e.target.value })}
-                    placeholder="0"
-                    min="0"
-                  />
-                </div>
-                {isOwner && (
-                  <div className="space-y-2">
-                    <Label htmlFor="cost_price">Precio Costo (Q)</Label>
-                    <Input
-                      id="cost_price"
-                      type="number"
-                      value={formData.cost_price}
-                      onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="sale_price">Precio Venta (Q)</Label>
-                  <Input
-                    id="sale_price"
-                    type="number"
-                    value={formData.sale_price}
-                    onChange={(e) => setFormData({ ...formData, sale_price: e.target.value })}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="supplier">Proveedor</Label>
-                  <Input
-                    id="supplier"
-                    value={formData.supplier}
-                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                    placeholder="Nombre del proveedor"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={closeDialog}>
-                  Cancelar
+          <InventoryFormDialog
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleSubmit}
+            isPending={createMutation.isPending || updateMutation.isPending}
+            editingItem={editingItem}
+            isOwner={isOwner}
+            onClose={closeDialog}
+            triggerButton={
+              <DialogTrigger asChild>
+                <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Nuevo Producto
                 </Button>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {(createMutation.isPending || updateMutation.isPending) ? "Guardando..." : "Guardar"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </DialogTrigger>
+            }
+          />
         </div>
 
         <InventoryImportModal
