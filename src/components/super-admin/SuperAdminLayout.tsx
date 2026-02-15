@@ -81,7 +81,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-[100dvh] pwa-safe-sidebar w-64 bg-white dark:bg-neutral-950 border-r border-black/[0.06] dark:border-white/10 transition-transform duration-300 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 pwa-safe-sidebar w-64 bg-white dark:bg-neutral-950 border-r border-black/[0.06] dark:border-white/10 transition-transform duration-300 lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -136,7 +136,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           </nav>
 
           {/* User section */}
-          <div className="border-t border-black/[0.06] dark:border-white/10 p-3">
+          <div className="border-t border-black/[0.06] dark:border-white/10 px-3 pt-3 pb-1">
             {user && (
               <div className="flex items-center gap-3 rounded-xl bg-black/[0.03] dark:bg-white/5 px-3 py-2.5">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50 dark:bg-red-600/15 text-red-500 dark:text-red-400 text-xs font-semibold">
