@@ -19,10 +19,10 @@ export function RequireAuth({ children }: RequireAuthProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#fafafa' }}>
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Cargando...</p>
+          <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#E85565' }} />
+          <p style={{ color: '#666' }}>Cargando...</p>
         </div>
       </div>
     );

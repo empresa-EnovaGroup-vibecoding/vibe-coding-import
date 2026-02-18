@@ -17,15 +17,15 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "prompt",
+      registerType: "autoUpdate",
       includeAssets: ["icon-192.png", "icon-512.png", "icon-maskable.png"],
       manifest: {
-        name: "Aura - Gestion de Negocio",
-        short_name: "Aura",
+        name: "Nexus - Panel de gestion",
+        short_name: "Nexus",
         description: "Panel de gestion interna para negocios de bienestar y belleza",
         start_url: "/",
         display: "standalone",
-        background_color: "#09090b",
+        background_color: "#fafafa",
         theme_color: "#E85565",
         orientation: "portrait-primary",
         icons: [
